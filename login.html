@@ -739,18 +739,33 @@
         <div class="post-item">
           <div class="post-header">
             <span class="post-author"><span class="post-author-avatar">VG</span>Vince Gayem</span>
-            <span class="post-date">${p.date}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="post-date">${p.date}</span>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost(${p.id})">✏️</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deletePost(${p.id})">🗑️</button>
+            </div>
           </div>
           <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
-          <div class="post-title">${p.title}</div>
-          <div class="post-body">${p.body}</div>
+          <div class="post-title" id="post-title-${p.id}">${p.title}</div>
+          <div class="post-body" id="post-body-${p.id}">${p.body}</div>
+          <div id="post-edit-${p.id}" style="display:none;margin:15px 0;">
+            <input type="text" id="post-edit-title-${p.id}" value="${p.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+            <textarea id="post-edit-body-${p.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${p.body}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="savePost(${p.id})">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost(${p.id})">Cancel</button>
+            </div>
+          </div>
           <div class="comments-section">
             <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
-            ${p.comments.map(c => `
+            ${p.comments.map((c, ci) => `
               <div class="comment-item">
                 <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-                <div class="comment-content">
-                  <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                <div class="comment-content" style="flex:1;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminComment(${p.id}, ${ci})">🗑️</button>
+                  </div>
                   <div class="comment-text">${c.text}</div>
                   <div class="comment-time">${c.time}</div>
                 </div>
@@ -763,6 +778,55 @@
           </div>
         </div>
       `).join('');
+    }
+
+    function editPost(id) {
+      document.getElementById('post-title-' + id).style.display = 'none';
+      document.getElementById('post-body-' + id).style.display = 'none';
+      document.getElementById('post-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditPost(id) {
+      const posts = getData('posts', []);
+      const p = posts.find(x => x.id === id);
+      document.getElementById('post-edit-title-' + id).value = p.title;
+      document.getElementById('post-edit-body-' + id).value = p.body;
+      document.getElementById('post-title-' + id).style.display = 'block';
+      document.getElementById('post-body-' + id).style.display = 'block';
+      document.getElementById('post-edit-' + id).style.display = 'none';
+    }
+
+    function savePost(id) {
+      const newTitle = document.getElementById('post-edit-title-' + id).value.trim();
+      const newBody = document.getElementById('post-edit-body-' + id).value.trim();
+      if (!newTitle || !newBody) return alert('Title and body cannot be empty.');
+      const posts = getData('posts', []);
+      const p = posts.find(x => x.id === id);
+      if (p) {
+        p.title = newTitle;
+        p.body = newBody;
+        setData('posts', posts);
+        renderAdminPosts();
+      }
+    }
+
+    function deletePost(id) {
+      if (!confirm('Delete this post and all comments?')) return;
+      let posts = getData('posts', []);
+      posts = posts.filter(x => x.id !== id);
+      setData('posts', posts);
+      renderAdminPosts();
+    }
+
+    function deleteAdminComment(postId, commentIndex) {
+      if (!confirm('Delete this comment?')) return;
+      const posts = getData('posts', []);
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        post.comments.splice(commentIndex, 1);
+        setData('posts', posts);
+        renderAdminPosts();
+      }
     }
 
     function addComment(postId, role) {
@@ -910,7 +974,6 @@
       el.innerHTML = fb.map(f => `
         <div class="feedback-item" id="fb-item-${f.id}">
           <div class="feedback-header">
-            <span class="feedback-from">📝 You</span>
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="feedback-date">${f.date}</span>
               ${!f.reply ? `
@@ -928,7 +991,7 @@
             </div>
           </div>
           ${f.reply ? `
-            <div class="reply-content"><strong>Admin Reply:</strong> ${f.reply}</div>
+            <div class="reply-content">${f.reply}</div>
           ` : `<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">⏳ Waiting for reply...</p>`}
         </div>
       `).join('');
@@ -982,14 +1045,14 @@
         <div class="feedback-item" style="${f.deletedByMentee ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
           <div class="feedback-header">
             <span class="feedback-from">
-              👤 ${f.from}
+              ${f.from}
               ${f.deletedByMentee ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by mentee</span>' : ''}
             </span>
             <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}</span>
           </div>
           <div class="feedback-message">${f.message}</div>
           ${f.reply ? `
-            <div class="reply-content"><strong>Your Reply:</strong> ${f.reply}</div>
+            <div class="reply-content">${f.reply}</div>
           ` : f.deletedByMentee ? `
             <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Mentee deleted this question.</p>
           ` : `
@@ -1152,6 +1215,7 @@
       const answers = getData('taskAnswers', []);
       const el = document.getElementById('adminTasksList');
       const no = document.getElementById('noAdminTasks');
+      const loggedUsers = getData('loggedUsers', []);
 
       if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
@@ -1159,16 +1223,28 @@
       el.innerHTML = tasks.map(t => {
         const taskAnswers = answers.filter(a => a.taskId === t.id);
         const submitted = taskAnswers.length;
-        const mentees = getData('mentees', []).length;
         return `
           <div class="post-item">
             <div class="post-header">
               <span class="post-author"><span class="post-author-avatar">📝</span>Task</span>
-              <span class="post-date">Due: ${t.deadline}</span>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="post-date">Due: ${t.deadline}</span>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask(${t.id})">✏️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask(${t.id})">🗑️</button>
+              </div>
             </div>
-            <div class="post-title">${t.title}</div>
-            <div class="post-body">${t.desc}</div>
-            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${mentees}</p>
+            <div class="post-title" id="task-title-${t.id}">${t.title}</div>
+            <div class="post-body" id="task-desc-${t.id}">${t.desc}</div>
+            <div id="task-edit-${t.id}" style="display:none;margin:15px 0;">
+              <input type="text" id="task-edit-title-${t.id}" value="${t.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+              <textarea id="task-edit-desc-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${t.desc}</textarea>
+              <input type="date" id="task-edit-deadline-${t.id}" value="${t.deadline}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);margin-top:8px;">
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTask(${t.id})">Save</button>
+                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTask(${t.id})">Cancel</button>
+              </div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${loggedUsers.length}</p>
             ${taskAnswers.length ? `
               <div style="margin-top:15px;">
                 <strong style="font-size:0.9rem;">Mentee Submissions:</strong>
@@ -1184,10 +1260,42 @@
                 `).join('')}
               </div>
             ` : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;margin-top:10px;">No submissions yet.</p>'}
-            <button class="dash-logout" style="margin-top:15px;padding:6px 14px;font-size:0.8rem;border-color:#dc2626;color:#dc2626;" onclick="deleteTask(${t.id})">Delete Task</button>
           </div>
         `;
       }).join('');
+    }
+
+    function editTask(id) {
+      document.getElementById('task-title-' + id).style.display = 'none';
+      document.getElementById('task-desc-' + id).style.display = 'none';
+      document.getElementById('task-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditTask(id) {
+      const tasks = getData('tasks', []);
+      const t = tasks.find(x => x.id === id);
+      document.getElementById('task-edit-title-' + id).value = t.title;
+      document.getElementById('task-edit-desc-' + id).value = t.desc;
+      document.getElementById('task-edit-deadline-' + id).value = t.deadline;
+      document.getElementById('task-title-' + id).style.display = 'block';
+      document.getElementById('task-desc-' + id).style.display = 'block';
+      document.getElementById('task-edit-' + id).style.display = 'none';
+    }
+
+    function saveTask(id) {
+      const newTitle = document.getElementById('task-edit-title-' + id).value.trim();
+      const newDesc = document.getElementById('task-edit-desc-' + id).value.trim();
+      const newDeadline = document.getElementById('task-edit-deadline-' + id).value;
+      if (!newTitle || !newDesc || !newDeadline) return alert('All fields are required.');
+      const tasks = getData('tasks', []);
+      const t = tasks.find(x => x.id === id);
+      if (t) {
+        t.title = newTitle;
+        t.desc = newDesc;
+        t.deadline = newDeadline;
+        setData('tasks', tasks);
+        renderAdminTasks();
+      }
     }
 
     function deleteTask(id) {
