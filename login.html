@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     body {
       min-height: 100vh;
@@ -654,6 +655,9 @@
     if (!getData('loggedUsers', null)) setData('loggedUsers', []);
     if (!getData('adminInvites', null)) setData('adminInvites', []);
     if (!getData('adminInvitedUsers', null)) setData('adminInvitedUsers', []);
+
+    // ===== EMAILJS INIT =====
+    emailjs.init('YOUR_PUBLIC_KEY_HERE'); // Replace with your EmailJS public key
 
     // ===== TRACK USERS =====
     function trackUser(user, name, email, picture) {
@@ -1677,8 +1681,21 @@
       document.getElementById('inviteEmail').value = '';
       document.getElementById('inviteLink').value = link;
       document.getElementById('inviteLinkBox').style.display = 'block';
-      const el = document.getElementById('inviteSent');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+
+      // Send email via EmailJS
+      emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+        to_email: email,
+        invitation_link: link,
+        from_name: 'Agapay Mentorship'
+      }).then(() => {
+        const el = document.getElementById('inviteSent');
+        el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+      }).catch(err => {
+        console.error('Email send failed:', err);
+        alert('Email sending failed. Link copied instead. You can share it manually.');
+        navigator.clipboard.writeText(link);
+      });
+
       renderPendingInvites();
     }
 
