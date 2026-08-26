@@ -744,8 +744,39 @@
     function switchRole(r) {
       document.getElementById('btnMentee').classList.toggle('active', r === 'mentee');
       document.getElementById('btnAdmin').classList.toggle('active', r === 'admin');
-      document.getElementById('menteeLogin').style.display = r === 'mentee' ? 'block' : 'none';
-      document.getElementById('adminLogin').style.display = r === 'admin' ? 'block' : 'none';
+
+      const menteeLogin = document.getElementById('menteeLogin');
+      const adminLogin = document.getElementById('adminLogin');
+
+      if (r === 'mentee') {
+        adminLogin.style.opacity = '0';
+        adminLogin.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          adminLogin.style.display = 'none';
+          menteeLogin.style.display = 'block';
+          menteeLogin.style.opacity = '0';
+          menteeLogin.style.transform = 'translateY(10px)';
+          requestAnimationFrame(() => {
+            menteeLogin.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            menteeLogin.style.opacity = '1';
+            menteeLogin.style.transform = 'translateY(0)';
+          });
+        }, 200);
+      } else {
+        menteeLogin.style.opacity = '0';
+        menteeLogin.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          menteeLogin.style.display = 'none';
+          adminLogin.style.display = 'block';
+          adminLogin.style.opacity = '0';
+          adminLogin.style.transform = 'translateY(10px)';
+          requestAnimationFrame(() => {
+            adminLogin.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            adminLogin.style.opacity = '1';
+            adminLogin.style.transform = 'translateY(0)';
+          });
+        }, 200);
+      }
     }
 
     // ===== LOGIN =====
