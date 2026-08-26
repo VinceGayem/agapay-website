@@ -558,12 +558,7 @@
     function getData(k, f) { const d = localStorage.getItem('agapay_' + k); return d ? JSON.parse(d) : f; }
     function setData(k, v) { localStorage.setItem('agapay_' + k, JSON.stringify(v)); }
 
-    const defaultMentees = [
-      { user: 'mentee1', password: 'agapay2026', name: 'Juan Dela Cruz', email: 'juan.delacruz@phinmaed.com' },
-      { user: 'mentee2', password: 'agapay2026', name: 'Maria Santos', email: 'maria.santos@phinmaed.com' },
-      { user: 'mentee3', password: 'agapay2026', name: 'Jose Reyes', email: 'jose.reyes@phinmaed.com' },
-      { user: 'mentee4', password: 'agapay2026', name: 'Ana Garcia', email: 'ana.garcia@phinmaed.com' },
-    ];
+    const defaultMentees = [];
     const defaultAdmin = { user: 'admin', password: 'agapayadmin' };
 
     if (!getData('mentees', null)) setData('mentees', defaultMentees);
@@ -1012,43 +1007,27 @@
     // ===== MENTEE LIST =====
     function renderMenteeList() {
       const loggedUsers = getData('loggedUsers', []);
-      const mentees = getData('mentees', []);
 
-      // Combine: logged users + mentee accounts (avoid duplicates)
-      const allUsers = [...loggedUsers];
-      mentees.forEach(m => {
-        if (!allUsers.find(u => u.user === m.user)) {
-          allUsers.unshift({
-            user: m.user,
-            name: m.name,
-            email: m.email,
-            picture: null,
-            registered: 'Account',
-            lastLogin: 'Never'
-          });
-        }
-      });
-
-      document.getElementById('menteeList').innerHTML = allUsers.map(u => `
+      document.getElementById('menteeList').innerHTML = loggedUsers.length ? loggedUsers.map(u => `
         <div class="mentee-item">
           <div class="mentee-info">
             <div class="mentee-avatar">${u.picture ? `<img src="${u.picture}" style="width:45px;height:45px;border-radius:50%;">` : u.name.split(' ').map(n => n[0]).join('')}</div>
             <div>
               <div class="mentee-name">${u.name}</div>
-              <div class="mentee-email">${u.email || u.user}@phinmaed.com</div>
+              <div class="mentee-email">${u.email || u.user}</div>
               <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Last login: ${u.lastLogin || 'N/A'}</div>
             </div>
           </div>
           <span class="mentee-status status-active">Active</span>
         </div>
-      `).join('');
+      `).join('') : '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees have logged in yet.</p>';
 
-      document.getElementById('totalMentees').textContent = allUsers.length;
+      document.getElementById('totalMentees').textContent = loggedUsers.length;
 
       // Populate session mentee dropdown
       const sel = document.getElementById('sessionMentee');
       if (sel) {
-        sel.innerHTML = allUsers.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
+        sel.innerHTML = loggedUsers.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
       }
     }
 
