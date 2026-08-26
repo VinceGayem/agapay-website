@@ -159,6 +159,52 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
+    /* Mobile Menu Toggle */
+    .mobile-menu-toggle {
+      display: none; background: rgba(212,168,67,0.1); border: 2px solid rgba(212,168,67,0.3);
+      border-radius: 10px; padding: 12px 16px; cursor: pointer; width: 100%;
+      margin-bottom: 15px; font-family: inherit;
+    }
+    .mobile-menu-toggle span {
+      display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; font-size: 0.95rem;
+    }
+    .mobile-menu-toggle .hamburger {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .mobile-menu-toggle .hamburger span {
+      width: 22px; height: 2px; background: var(--gold); border-radius: 2px; transition: var(--transition);
+    }
+    .mobile-menu-toggle.active .hamburger span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+    .mobile-menu-toggle.active .hamburger span:nth-child(2) { opacity: 0; }
+    .mobile-menu-toggle.active .hamburger span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+    /* Smooth transitions for tabs */
+    .tab-content {
+      animation: none;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    @media (max-width: 768px) {
+      .mobile-menu-toggle { display: block; }
+      .admin-tabs { display: none; flex-direction: column; position: absolute; z-index: 100; left: 20px; right: 20px; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--gray-200); }
+      .admin-tabs.mobile-open { display: flex; }
+      .admin-tab { width: 100%; text-align: left; padding: 14px 16px; border-radius: 8px; }
+      .dash-header { flex-direction: column; gap: 15px; text-align: center; }
+      .dash-header h1 { font-size: 1.4rem; }
+      .dash-stats { grid-template-columns: 1fr; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .dashboard { padding: 15px; margin-top: 70px; }
+      .login-container { padding: 15px; }
+      .login-card { padding: 30px 20px; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .dashboard { max-width: 800px; }
+    }
+
     /* Mentee List */
     .mentee-list { display: flex; flex-direction: column; gap: 12px; }
     .mentee-item {
@@ -376,7 +422,13 @@
       <div class="dash-stat"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
 
-    <div class="admin-tabs">
+    <div class="admin-tabs" id="menteeTabs">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabs')">
+        <span>
+          <span class="hamburger"><span></span><span></span><span></span></span>
+          Menu
+        </span>
+      </button>
       <button class="admin-tab active" onclick="showMenteeTab('home')">🏠 Home</button>
       <button class="admin-tab" onclick="showMenteeTab('tasks')">📝 Tasks</button>
       <button class="admin-tab" onclick="showMenteeTab('posts')">📢 Announcements</button>
@@ -439,7 +491,13 @@
       <div class="dash-stat"><h4 id="totalQuestions">0</h4><p>New Questions</p></div>
     </div>
 
-    <div class="admin-tabs">
+    <div class="admin-tabs" id="adminTabs">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('adminTabs')">
+        <span>
+          <span class="hamburger"><span></span><span></span><span></span></span>
+          Menu
+        </span>
+      </button>
       <button class="admin-tab active" onclick="showTab('mentees')">👤 Mentees</button>
       <button class="admin-tab" onclick="showTab('sessions')">📅 Sessions</button>
       <button class="admin-tab" onclick="showTab('tasks')">📝 Tasks</button>
@@ -689,6 +747,14 @@
       document.getElementById('adminForm').reset();
     }
 
+    // ===== MOBILE MENU =====
+    function toggleMobileMenu(tabsId) {
+      const tabsContainer = document.getElementById(tabsId);
+      const toggle = tabsContainer.querySelector('.mobile-menu-toggle');
+      tabsContainer.classList.toggle('mobile-open');
+      toggle.classList.toggle('active');
+    }
+
     // ===== MENTEE TABS =====
     function showMenteeTab(t) {
       document.querySelectorAll('#menteeDashboard .admin-tab').forEach(b => b.classList.remove('active'));
@@ -697,6 +763,8 @@
       document.getElementById('mtab-' + t).classList.add('active');
       if (t === 'posts') renderMenteePosts();
       if (t === 'feedback') renderMyFeedback();
+      document.getElementById('menteeTabs').classList.remove('mobile-open');
+      document.getElementById('menteeTabs').querySelector('.mobile-menu-toggle').classList.remove('active');
     }
 
     // ===== ADMIN TABS =====
@@ -705,6 +773,8 @@
       document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
       document.querySelector(`[onclick="showTab('${t}')"]`).classList.add('active');
       document.getElementById('tab-' + t).classList.add('active');
+      document.getElementById('adminTabs').classList.remove('mobile-open');
+      document.getElementById('adminTabs').querySelector('.mobile-menu-toggle').classList.remove('active');
     }
 
     // ===== ADMIN: POSTS =====
