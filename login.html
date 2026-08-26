@@ -371,9 +371,9 @@
     </div>
 
     <div class="dash-stats">
-      <div class="dash-stat"><h4>5</h4><p>Sessions Done</p></div>
-      <div class="dash-stat"><h4>2</h4><p>Upcoming</p></div>
-      <div class="dash-stat"><h4>85%</h4><p>Progress</p></div>
+      <div class="dash-stat"><h4 id="statDone">0</h4><p>Sessions Done</p></div>
+      <div class="dash-stat"><h4 id="statUpcoming">0</h4><p>Upcoming</p></div>
+      <div class="dash-stat"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
 
     <div class="admin-tabs">
@@ -434,6 +434,7 @@
 
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="showTab('mentees')">👤 Mentees</button>
+      <button class="admin-tab" onclick="showTab('sessions')">📅 Sessions</button>
       <button class="admin-tab" onclick="showTab('posts')">📢 Posts</button>
       <button class="admin-tab" onclick="showTab('questions')">❓ Questions</button>
       <button class="admin-tab" onclick="showTab('settings')">⚙️ Settings</button>
@@ -442,6 +443,34 @@
     <!-- Mentees -->
     <div class="tab-content active" id="tab-mentees">
       <div class="dash-card"><h3>👤 All Mentees</h3><div class="mentee-list" id="menteeList"></div></div>
+    </div>
+
+    <!-- Sessions Management -->
+    <div class="tab-content" id="tab-sessions">
+      <div class="dash-card">
+        <h3>📅 Manage Sessions</h3>
+        <p style="margin-bottom:20px;">Add sessions for each mentee. Mark as done or upcoming.</p>
+        <div class="form-group">
+          <label>Select Mentee</label>
+          <select id="sessionMentee"></select>
+        </div>
+        <div class="form-group"><label>Session Title</label><input type="text" id="sessionTitle" placeholder="e.g. Week 1 - Introduction"></div>
+        <div class="form-group"><label>Date</label><input type="date" id="sessionDate"></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="sessionStatus">
+            <option value="upcoming">Upcoming</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addSession()">Add Session</button>
+        <div class="reply-saved" id="sessionAdded">Session added!</div>
+      </div>
+      <div class="dash-card">
+        <h3>📋 All Sessions</h3>
+        <div id="sessionsList"></div>
+        <p id="noSessions" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No sessions yet.</p>
+      </div>
     </div>
 
     <!-- Posts -->
@@ -516,6 +545,7 @@
     if (!getData('admin', null)) setData('admin', defaultAdmin);
     if (!getData('feedback', null)) setData('feedback', []);
     if (!getData('posts', null)) setData('posts', []);
+    if (!getData('sessions', null)) setData('sessions', []);
 
     // ===== GOOGLE LOGIN =====
     function handleGoogleLogin(response) {
@@ -582,6 +612,8 @@
         const header = document.querySelector('#menteeDashboard .dash-header h1');
         header.innerHTML = `<img src="${picture}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">Welcome, <span id="menteeName">${name}</span>!`;
       }
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      updateMenteeStats(user.user);
       renderMenteePosts();
       renderMyFeedback();
     }
@@ -590,6 +622,7 @@
       document.getElementById('loginWrapper').classList.add('hidden');
       document.getElementById('adminDashboard').classList.add('active');
       renderMenteeList();
+      renderSessionsList();
       renderAdminPosts();
       renderAllFeedback();
       updateStats();
@@ -840,6 +873,95 @@
         </div>
       `).join('');
       document.getElementById('totalMentees').textContent = mentees.length;
+
+      // Populate session mentee dropdown
+      const sel = document.getElementById('sessionMentee');
+      if (sel) {
+        sel.innerHTML = mentees.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
+      }
+    }
+
+    // ===== SESSIONS =====
+    function addSession() {
+      const user = document.getElementById('sessionMentee').value;
+      const title = document.getElementById('sessionTitle').value.trim();
+      const date = document.getElementById('sessionDate').value;
+      const status = document.getElementById('sessionStatus').value;
+      if (!user || !title || !date) return alert('Please fill in all fields.');
+
+      const sessions = getData('sessions', []);
+      sessions.unshift({
+        id: Date.now(), user, title, date, status,
+        dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      });
+      setData('sessions', sessions);
+
+      document.getElementById('sessionTitle').value = '';
+      document.getElementById('sessionDate').value = '';
+      const el = document.getElementById('sessionAdded');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+
+      renderSessionsList();
+    }
+
+    function renderSessionsList() {
+      const sessions = getData('sessions', []);
+      const el = document.getElementById('sessionsList');
+      const no = document.getElementById('noSessions');
+      const mentees = getData('mentees', []);
+
+      if (!sessions.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = sessions.map(s => {
+        const m = mentees.find(x => x.user === s.user);
+        return `
+          <div class="mentee-item">
+            <div class="mentee-info">
+              <div class="mentee-avatar">${s.status === 'done' ? '✅' : '📅'}</div>
+              <div>
+                <div class="mentee-name">${s.title}</div>
+                <div class="mentee-email">${m ? m.name : s.user} • ${s.date}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="mentee-status ${s.status === 'done' ? 'status-active' : 'status-pending'}">${s.status === 'done' ? 'Done' : 'Upcoming'}</span>
+              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;" onclick="toggleSession(${s.id})">${s.status === 'done' ? 'Undo' : 'Done'}</button>
+              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteSession(${s.id})">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSession(id) {
+      const sessions = getData('sessions', []);
+      const s = sessions.find(x => x.id === id);
+      if (s) {
+        s.status = s.status === 'done' ? 'upcoming' : 'done';
+        setData('sessions', sessions);
+        renderSessionsList();
+      }
+    }
+
+    function deleteSession(id) {
+      if (!confirm('Delete this session?')) return;
+      let sessions = getData('sessions', []);
+      sessions = sessions.filter(x => x.id !== id);
+      setData('sessions', sessions);
+      renderSessionsList();
+    }
+
+    function updateMenteeStats(user) {
+      const sessions = getData('sessions', []).filter(s => s.user === user);
+      const done = sessions.filter(s => s.status === 'done').length;
+      const upcoming = sessions.filter(s => s.status === 'upcoming').length;
+      const total = sessions.length;
+      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('statDone').textContent = done;
+      document.getElementById('statUpcoming').textContent = upcoming;
+      document.getElementById('statProgress').textContent = progress + '%';
     }
 
     // ===== SETTINGS =====
