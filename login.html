@@ -12,12 +12,7 @@
   <style>
     body {
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-      flex-direction: column;
-      gap: 30px;
     }
 
     .login-container { width: 100%; max-width: 440px; padding: 20px; min-height: 520px; }
@@ -121,7 +116,13 @@
     .dashboard { display: none; width: 100%; max-width: 1000px; padding: 20px; margin-top: 80px; }
     .dashboard.active { display: block; }
     .login-wrapper.hidden { display: none; }
-    .login-wrapper { margin-top: 80px; }
+    .login-wrapper {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
 
     .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
     .dash-header h1 { color: #ffffff; font-size: 1.8rem; }
