@@ -1707,6 +1707,7 @@
       // Send email via EmailJS
       emailjs.send('service_ov5dper', 'template_jvvpnp5', {
         email: email,
+        name: email.split('@')[0],
         invitation_link: link,
         from_name: 'Agapay Mentorship'
       }).then(() => {
