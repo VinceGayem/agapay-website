@@ -960,7 +960,7 @@
 
     function renderMyFeedback() {
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const fb = getData('feedback', []).filter(f => f.user === user.user && !f.deletedByMentee);
+      const fb = getData('feedback', []).filter(f => f.user === user.user && !f.deletedByMentee && !f.deletedByAdmin);
       const el = document.getElementById('myFeedbackList');
       const no = document.getElementById('noMyFeedback');
 
@@ -1038,19 +1038,33 @@
       no.style.display = 'none';
 
       el.innerHTML = fb.map(f => `
-        <div class="feedback-item" style="${f.deletedByMentee ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
+        <div class="feedback-item" style="${f.deletedByMentee || f.deletedByAdmin ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
           <div class="feedback-header">
             <span class="feedback-from">
               ${f.from}
               ${f.deletedByMentee ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by mentee</span>' : ''}
+              ${f.deletedByAdmin ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by admin</span>' : ''}
             </span>
-            <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}${f.deletedByAdmin ? ' • Removed: ' + f.deletedAt : ''}</span>
+              ${!f.deletedByAdmin && !f.deletedByMentee ? `
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="adminEditFeedback(${f.id})">✏️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="adminDeleteFeedback(${f.id})">🗑️</button>
+              ` : ''}
+            </div>
           </div>
-          <div class="feedback-message">${f.message}</div>
+          <div class="feedback-message" id="admin-fb-msg-${f.id}">${f.message}</div>
+          <div id="admin-fb-edit-${f.id}" style="display:none;margin:10px 0;">
+            <textarea id="admin-fb-edit-input-${f.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.message}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminFeedback(${f.id})">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminFeedback(${f.id})">Cancel</button>
+            </div>
+          </div>
           ${f.reply ? `
             <div class="reply-content">${f.reply}</div>
-          ` : f.deletedByMentee ? `
-            <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Mentee deleted this question.</p>
+          ` : f.deletedByMentee || f.deletedByAdmin ? `
+            <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Question was deleted.</p>
           ` : `
             <div class="feedback-reply">
               <textarea id="reply-${f.id}" placeholder="Write your reply..."></textarea>
@@ -1061,7 +1075,44 @@
         </div>
       `).join('');
 
-      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply && !f.deletedByMentee).length;
+      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply && !f.deletedByMentee && !f.deletedByAdmin).length;
+    }
+
+    function adminEditFeedback(id) {
+      document.getElementById('admin-fb-msg-' + id).style.display = 'none';
+      document.getElementById('admin-fb-edit-' + id).style.display = 'block';
+    }
+
+    function cancelAdminFeedback(id) {
+      const fb = getData('feedback', []);
+      const f = fb.find(x => x.id === id);
+      document.getElementById('admin-fb-edit-input-' + id).value = f.message;
+      document.getElementById('admin-fb-msg-' + id).style.display = 'block';
+      document.getElementById('admin-fb-edit-' + id).style.display = 'none';
+    }
+
+    function saveAdminFeedback(id) {
+      const newMsg = document.getElementById('admin-fb-edit-input-' + id).value.trim();
+      if (!newMsg) return alert('Message cannot be empty.');
+      const fb = getData('feedback', []);
+      const f = fb.find(x => x.id === id);
+      if (f) {
+        f.message = newMsg;
+        setData('feedback', fb);
+        renderAllFeedback();
+      }
+    }
+
+    function adminDeleteFeedback(id) {
+      if (!confirm('Delete this question?')) return;
+      const fb = getData('feedback', []);
+      const f = fb.find(x => x.id === id);
+      if (f) {
+        f.deletedByAdmin = true;
+        f.deletedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        setData('feedback', fb);
+        renderAllFeedback();
+      }
     }
 
     function sendReply(id) {
