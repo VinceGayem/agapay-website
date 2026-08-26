@@ -738,7 +738,6 @@
       el.innerHTML = posts.map(p => `
         <div class="post-item">
           <div class="post-header">
-            <span class="post-author"><span class="post-author-avatar">VG</span>Vince Gayem</span>
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="post-date">${p.date}</span>
               <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost(${p.id})">✏️</button>
@@ -760,8 +759,7 @@
             <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
             ${p.comments.map((c, ci) => `
               <div class="comment-item">
-                <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-                <div class="comment-content" style="flex:1;">
+                <div class="comment-content">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
                     <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminComment(${p.id}, ${ci})">🗑️</button>
@@ -864,7 +862,6 @@
       el.innerHTML = posts.map(p => `
         <div class="post-item">
           <div class="post-header">
-            <span class="post-author"><span class="post-author-avatar">VG</span>Vince Gayem</span>
             <span class="post-date">${p.date}</span>
           </div>
           <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
@@ -874,8 +871,7 @@
             <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
             ${p.comments.map((c, ci) => `
               <div class="comment-item">
-                <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-                <div class="comment-content" style="flex:1;">
+                <div class="comment-content">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
                     ${c.user === currentUser.user && c.role !== 'admin' ? `
@@ -1226,7 +1222,6 @@
         return `
           <div class="post-item">
             <div class="post-header">
-              <span class="post-author"><span class="post-author-avatar">📝</span>Task</span>
               <div style="display:flex;gap:8px;align-items:center;">
                 <span class="post-date">Due: ${t.deadline}</span>
                 <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask(${t.id})">✏️</button>
@@ -1250,7 +1245,6 @@
                 <strong style="font-size:0.9rem;">Mentee Submissions:</strong>
                 ${taskAnswers.map(a => `
                   <div class="comment-item" style="margin-top:8px;">
-                    <div class="comment-avatar mentee-avatar">${a.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
                     <div class="comment-content">
                       <div class="comment-author">${a.author}</div>
                       <div class="comment-text">${a.answer}</div>
@@ -1325,7 +1319,6 @@
         return `
           <div class="post-item">
             <div class="post-header">
-              <span class="post-author"><span class="post-author-avatar">📝</span>Task</span>
               <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${t.deadline}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
             </div>
             <div class="post-title">${t.title}</div>
