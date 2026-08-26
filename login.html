@@ -194,13 +194,35 @@
       .admin-tabs-wrapper .admin-tabs { display: none; flex-direction: column; position: absolute; z-index: 100; left: 0; right: 0; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--gray-200); }
       .admin-tabs-wrapper.mobile-open .admin-tabs { display: flex; }
       .admin-tab { width: 100%; text-align: left; padding: 14px 16px; border-radius: 8px; }
-      .dash-header { flex-direction: column; gap: 15px; text-align: center; }
-      .dash-header h1 { font-size: 1.4rem; }
-      .dash-stats { grid-template-columns: 1fr; }
-      .dash-grid { grid-template-columns: 1fr; }
-      .dashboard { padding: 15px; margin-top: 70px; }
+      .dash-header { flex-direction: row; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 20px; }
+      .dash-header h1 { font-size: 1.1rem; margin: 0; }
+      .dash-header h1 span { display: none; }
+      .dash-welcome { font-size: 0.8rem; margin: 0; }
+      .dash-logout { padding: 8px 14px; font-size: 0.8rem; border-width: 1px; }
+      .dash-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+      .dash-stat { padding: 12px 8px; border-radius: 10px; }
+      .dash-stat h4 { font-size: 1.2rem; margin: 0; }
+      .dash-stat p { font-size: 0.7rem; margin: 2px 0 0; }
+      .dash-grid { grid-template-columns: 1fr; gap: 12px; }
+      .dash-card { padding: 18px; margin-bottom: 12px; border-radius: 12px; }
+      .dash-card h3 { font-size: 0.95rem; margin-bottom: 8px; }
+      .dash-card p { font-size: 0.85rem; line-height: 1.6; }
+      .dashboard { padding: 12px; margin-top: 60px; max-width: 100%; }
       .login-container { padding: 15px; }
-      .login-card { padding: 30px 20px; }
+      .login-card { padding: 25px 18px; border-radius: 16px; }
+      .post-item { padding: 15px; border-radius: 12px; margin-bottom: 12px; }
+      .post-header { margin-bottom: 10px; }
+      .post-title { font-size: 1rem; margin-bottom: 8px; }
+      .post-body { font-size: 0.85rem; line-height: 1.6; margin-bottom: 12px; }
+      .comment-item { padding: 10px; }
+      .comment-text { font-size: 0.85rem; }
+      .feedback-item { padding: 15px; }
+      .settings-form { display: flex; flex-direction: column; gap: 15px; }
+      .settings-section { padding: 15px; }
+      .form-group input, .form-group select { padding: 12px; font-size: 0.9rem; }
+      .btn { padding: 12px; font-size: 0.9rem; }
+      .mentee-item { padding: 12px 15px; }
+      body { min-height: 100vh; overflow-x: hidden; }
     }
 
     @media (min-width: 769px) and (max-width: 1024px) {
