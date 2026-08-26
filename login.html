@@ -797,6 +797,7 @@
       const posts = getData('posts', []);
       const el = document.getElementById('menteePostsList');
       const no = document.getElementById('noMenteePosts');
+      const currentUser = JSON.parse(sessionStorage.getItem('agapayUser'));
 
       if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
@@ -812,12 +813,27 @@
           <div class="post-body">${p.body}</div>
           <div class="comments-section">
             <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
-            ${p.comments.map(c => `
+            ${p.comments.map((c, ci) => `
               <div class="comment-item">
                 <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-                <div class="comment-content">
-                  <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
-                  <div class="comment-text">${c.text}</div>
+                <div class="comment-content" style="flex:1;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                    ${c.user === currentUser.user && c.role !== 'admin' ? `
+                      <div style="display:flex;gap:5px;">
+                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editComment(${p.id}, ${ci})">✏️</button>
+                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteComment(${p.id}, ${ci})">🗑️</button>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div class="comment-text" id="cmt-text-${p.id}-${ci}">${c.text}</div>
+                  <div id="cmt-edit-${p.id}-${ci}" style="display:none;margin-top:5px;">
+                    <input type="text" id="cmt-input-${p.id}-${ci}" value="${c.text}" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text);">
+                    <div style="display:flex;gap:5px;margin-top:5px;">
+                      <button style="padding:4px 10px;border-radius:6px;border:none;background:var(--gold);color:var(--navy);font-size:0.75rem;font-weight:600;cursor:pointer;" onclick="saveComment(${p.id}, ${ci})">Save</button>
+                      <button style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:var(--card-bg);color:var(--text);font-size:0.75rem;cursor:pointer;" onclick="cancelEditComment(${p.id}, ${ci})">Cancel</button>
+                    </div>
+                  </div>
                   <div class="comment-time">${c.time}</div>
                 </div>
               </div>
@@ -829,6 +845,42 @@
           </div>
         </div>
       `).join('');
+    }
+
+    function editComment(postId, commentIndex) {
+      document.getElementById(`cmt-text-${postId}-${commentIndex}`).style.display = 'none';
+      document.getElementById(`cmt-edit-${postId}-${commentIndex}`).style.display = 'block';
+    }
+
+    function cancelEditComment(postId, commentIndex) {
+      const posts = getData('posts', []);
+      const post = posts.find(p => p.id === postId);
+      document.getElementById(`cmt-input-${postId}-${commentIndex}`).value = post.comments[commentIndex].text;
+      document.getElementById(`cmt-text-${postId}-${commentIndex}`).style.display = 'block';
+      document.getElementById(`cmt-edit-${postId}-${commentIndex}`).style.display = 'none';
+    }
+
+    function saveComment(postId, commentIndex) {
+      const newText = document.getElementById(`cmt-input-${postId}-${commentIndex}`).value.trim();
+      if (!newText) return;
+      const posts = getData('posts', []);
+      const post = posts.find(p => p.id === postId);
+      if (post && post.comments[commentIndex]) {
+        post.comments[commentIndex].text = newText;
+        setData('posts', posts);
+        renderMenteePosts();
+      }
+    }
+
+    function deleteComment(postId, commentIndex) {
+      if (!confirm('Delete this comment?')) return;
+      const posts = getData('posts', []);
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        post.comments.splice(commentIndex, 1);
+        setData('posts', posts);
+        renderMenteePosts();
+      }
     }
 
     // ===== FEEDBACK / QUESTIONS =====
@@ -1184,8 +1236,24 @@
             <div class="post-body">${t.desc}</div>
             ${myAnswer ? `
               <div class="reply-content" style="margin-top:15px;">
-                <strong>Your Answer:</strong> ${myAnswer.answer}
-                <div class="comment-time" style="margin-top:5px;">Submitted: ${myAnswer.time}</div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                  <div style="flex:1;">
+                    <strong>Your Answer:</strong>
+                    <div id="task-ans-text-${t.id}">${myAnswer.answer}</div>
+                    <div id="task-ans-edit-${t.id}" style="display:none;margin-top:8px;">
+                      <textarea id="task-ans-input-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${myAnswer.answer}</textarea>
+                      <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTaskAnswer(${t.id})">Save</button>
+                        <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTaskAnswer(${t.id})">Cancel</button>
+                      </div>
+                    </div>
+                    <div class="comment-time" style="margin-top:5px;">Submitted: ${myAnswer.time}</div>
+                  </div>
+                  <div style="display:flex;gap:5px;margin-left:10px;">
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--gold);" onclick="editTaskAnswer(${t.id})">✏️</button>
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:#ef4444;" onclick="deleteTaskAnswer(${t.id})">🗑️</button>
+                  </div>
+                </div>
               </div>
             ` : `
               <div class="feedback-reply" style="margin-top:15px;">
@@ -1196,6 +1264,43 @@
           </div>
         `;
       }).join('');
+    }
+
+    function editTaskAnswer(taskId) {
+      document.getElementById(`task-ans-text-${taskId}`).style.display = 'none';
+      document.getElementById(`task-ans-edit-${taskId}`).style.display = 'block';
+    }
+
+    function cancelEditTaskAnswer(taskId) {
+      const answers = getData('taskAnswers', []);
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const myAnswer = answers.find(a => a.taskId === taskId && a.user === user.user);
+      document.getElementById(`task-ans-input-${taskId}`).value = myAnswer.answer;
+      document.getElementById(`task-ans-text-${taskId}`).style.display = 'block';
+      document.getElementById(`task-ans-edit-${taskId}`).style.display = 'none';
+    }
+
+    function saveTaskAnswer(taskId) {
+      const newAnswer = document.getElementById(`task-ans-input-${taskId}`).value.trim();
+      if (!newAnswer) return alert('Answer cannot be empty.');
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const answers = getData('taskAnswers', []);
+      const myAnswer = answers.find(a => a.taskId === taskId && a.user === user.user);
+      if (myAnswer) {
+        myAnswer.answer = newAnswer;
+        myAnswer.time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (edited)';
+        setData('taskAnswers', answers);
+        renderMenteeTasks();
+      }
+    }
+
+    function deleteTaskAnswer(taskId) {
+      if (!confirm('Delete your answer?')) return;
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      let answers = getData('taskAnswers', []);
+      answers = answers.filter(a => !(a.taskId === taskId && a.user === user.user));
+      setData('taskAnswers', answers);
+      renderMenteeTasks();
     }
 
     function submitTaskAnswer(taskId) {
