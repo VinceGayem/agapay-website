@@ -679,7 +679,7 @@
     if (!getData('adminInvitedUsers', null)) setData('adminInvitedUsers', []);
 
     // ===== EMAILJS INIT =====
-    emailjs.init('YOUR_PUBLIC_KEY_HERE'); // Replace with your EmailJS public key
+    emailjs.init('ONzjMfvUFCoPoF5Ah');
 
     // ===== TRACK USERS =====
     function trackUser(user, name, email, picture) {
@@ -1705,7 +1705,7 @@
       document.getElementById('inviteLinkBox').style.display = 'block';
 
       // Send email via EmailJS
-      emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+      emailjs.send('service_ov5dper', 'template_jvvpnp5', {
         to_email: email,
         invitation_link: link,
         from_name: 'Agapay Mentorship'
