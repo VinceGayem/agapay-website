@@ -608,6 +608,21 @@
             <div class="reply-saved" id="passUpdated">Password updated!</div>
           </div>
           <div class="settings-section">
+            <h4>Invite New Admin</h4>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:15px;">Send an invitation link to make someone an admin.</p>
+            <div class="form-group"><label>Email Address</label><input type="email" id="inviteEmail" placeholder="Enter their Gmail address"></div>
+            <button class="btn btn-primary" onclick="inviteAdmin()">Send Invitation</button>
+            <div class="reply-saved" id="inviteSent">Invitation link generated!</div>
+            <div id="inviteLinkBox" style="display:none;margin-top:15px;">
+              <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Share this link:</p>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="inviteLink" readonly style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.85rem;background:var(--card-bg);color:var(--text);">
+                <button class="btn btn-primary" style="padding:8px 16px;font-size:0.85rem;" onclick="copyInviteLink()">Copy</button>
+              </div>
+            </div>
+            <div id="pendingInvites" style="margin-top:20px;"></div>
+          </div>
+          <div class="settings-section">
             <h4>Add New Mentee</h4>
             <div class="form-group"><label>Username</label><input type="text" id="newMenteeUser" placeholder="Enter username"></div>
             <div class="form-group"><label>Full Name</label><input type="text" id="newMenteeName" placeholder="Enter full name"></div>
@@ -637,6 +652,8 @@
     if (!getData('tasks', null)) setData('tasks', []);
     if (!getData('taskAnswers', null)) setData('taskAnswers', []);
     if (!getData('loggedUsers', null)) setData('loggedUsers', []);
+    if (!getData('adminInvites', null)) setData('adminInvites', []);
+    if (!getData('adminInvitedUsers', null)) setData('adminInvitedUsers', []);
 
     // ===== TRACK USERS =====
     function trackUser(user, name, email, picture) {
@@ -706,9 +723,13 @@
       const u = document.getElementById('adminUser').value.trim().toLowerCase();
       const p = document.getElementById('adminPass').value;
       const a = getData('admin', defaultAdmin);
-      if (u === a.user && p === a.password) {
+      const invitedAdmins = getData('adminInvitedUsers', []);
+      const invitedAdmin = invitedAdmins.find(a => a.user === u && a.password === p);
+
+      if ((u === a.user && p === a.password) || invitedAdmin) {
         document.getElementById('adminError').style.display = 'none';
-        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'admin', name: 'Admin' }));
+        const adminName = invitedAdmin ? invitedAdmin.name : 'Admin';
+        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'admin', name: adminName }));
         showAdminDashboard();
       } else {
         document.getElementById('adminError').style.display = 'block';
@@ -778,6 +799,7 @@
       document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
       document.querySelector(`[onclick="showTab('${t}')"]`).classList.add('active');
       document.getElementById('tab-' + t).classList.add('active');
+      if (t === 'settings') renderPendingInvites();
       document.getElementById('adminTabsWrapper').classList.remove('mobile-open');
       document.getElementById('adminTabsWrapper').querySelector('.mobile-menu-toggle').classList.remove('active');
     }
@@ -1632,6 +1654,64 @@
       const el = document.getElementById('menteeAdded');
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
       renderMenteeList();
+    }
+
+    // ===== INVITE ADMIN =====
+    function inviteAdmin() {
+      const email = document.getElementById('inviteEmail').value.trim();
+      if (!email || !email.includes('@')) return alert('Enter a valid email address.');
+
+      const token = 'agapay_' + btoa(email + '_' + Date.now()).replace(/=/g, '');
+      const baseUrl = window.location.origin + window.location.pathname.replace('login.html', '');
+      const link = baseUrl + 'admin-register.html?token=' + token + '&email=' + encodeURIComponent(email);
+
+      const invites = getData('adminInvites', []);
+      invites.push({
+        email: email,
+        token: token,
+        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+        status: 'pending'
+      });
+      setData('adminInvites', invites);
+
+      document.getElementById('inviteEmail').value = '';
+      document.getElementById('inviteLink').value = link;
+      document.getElementById('inviteLinkBox').style.display = 'block';
+      const el = document.getElementById('inviteSent');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+      renderPendingInvites();
+    }
+
+    function copyInviteLink() {
+      const input = document.getElementById('inviteLink');
+      input.select();
+      document.execCommand('copy');
+      alert('Link copied to clipboard!');
+    }
+
+    function renderPendingInvites() {
+      const invites = getData('adminInvites', []);
+      const el = document.getElementById('pendingInvites');
+      if (!invites.length) { el.innerHTML = ''; return; }
+
+      el.innerHTML = '<h4 style="margin-bottom:10px;">Pending Invitations</h4>' +
+        invites.map(inv => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-alt);border-radius:8px;margin-bottom:8px;border:1px solid var(--gray-200);">
+            <div>
+              <div style="font-weight:600;font-size:0.9rem;">${inv.email}</div>
+              <div style="font-size:0.8rem;color:var(--text-light);">${inv.date} — <span style="color:${inv.status === 'accepted' ? '#22c55e' : '#f59e0b'};">${inv.status}</span></div>
+            </div>
+            ${inv.status === 'pending' ? `<button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="cancelInvite('${inv.token}')">Cancel</button>` : ''}
+          </div>
+        `).join('');
+    }
+
+    function cancelInvite(token) {
+      if (!confirm('Cancel this invitation?')) return;
+      let invites = getData('adminInvites', []);
+      invites = invites.filter(i => i.token !== token);
+      setData('adminInvites', invites);
+      renderPendingInvites();
     }
 
     function updateStats() {

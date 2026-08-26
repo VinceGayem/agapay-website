@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Admin Account - Agapay Mentorship</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      flex-direction: column;
+      gap: 30px;
+      padding: 20px;
+    }
+    .register-container { width: 100%; max-width: 480px; }
+    .register-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+    .register-icon {
+      width: 70px; height: 70px;
+      background: rgba(212,168,67,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 20px;
+    }
+    .register-logo { font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+    .register-logo span { color: var(--gold); }
+    .register-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 10px; }
+    .register-email { color: var(--gold); font-weight: 600; font-size: 0.95rem; margin-bottom: 30px; }
+    .form-group { text-align: left; margin-bottom: 18px; }
+    .form-group label { font-size: 0.85rem; margin-bottom: 6px; display: block; font-weight: 600; color: var(--text); }
+    .form-group input {
+      width: 100%; padding: 14px 16px; border: 1px solid var(--gray-200);
+      border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+      background: var(--card-bg); color: var(--text);
+    }
+    .form-group input:focus { outline: none; border-color: var(--gold); }
+    .btn-primary {
+      width: 100%; padding: 15px; font-size: 1rem; margin-top: 10px;
+      justify-content: center;
+    }
+    .error-box {
+      background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px;
+      font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
+    }
+    [data-theme="dark"] .error-box { background: rgba(220,38,38,0.15); color: #f87171; }
+    .success-box {
+      background: #dcfce7; color: #16a34a; padding: 10px 15px; border-radius: 8px;
+      font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
+    }
+    .expired-card { text-align: center; padding: 40px; }
+    .expired-card h2 { color: #ef4444; margin-bottom: 15px; }
+    .expired-card p { color: var(--text-light); margin-bottom: 20px; }
+    .login-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.7); font-size: 0.9rem; transition: var(--transition);
+    }
+    .login-back:hover { color: var(--gold); }
+    .password-match { font-size: 0.8rem; margin-top: 5px; }
+    .password-match.valid { color: #22c55e; }
+    .password-match.invalid { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="register-card" id="registerForm">
+      <div class="register-icon">🛡️</div>
+      <div class="register-logo"><span>A</span>gapay</div>
+      <p class="register-subtitle">You've been invited to become an Admin</p>
+      <p class="register-email" id="inviteEmail"></p>
+      <div class="error-box" id="regError"></div>
+      <div class="success-box" id="regSuccess"></div>
+      <div class="form-group">
+        <label>Choose a Username</label>
+        <input type="text" id="regUser" placeholder="Enter a username">
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="regName" placeholder="Enter your full name">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="Create a password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="regPassConfirm" placeholder="Confirm your password">
+        <div class="password-match" id="passMatch"></div>
+      </div>
+      <button class="btn btn-primary" onclick="createAdminAccount()">Create Admin Account</button>
+    </div>
+
+    <div class="register-card expired-card" id="expiredCard" style="display:none;">
+      <div class="register-icon">⚠️</div>
+      <div class="register-logo"><span>A</span>gapay</div>
+      <h2>Invalid or Expired Link</h2>
+      <p>This invitation link is invalid or has already been used.</p>
+      <a href="login.html" class="login-back">← Back to Login</a>
+    </div>
+
+    <div class="register-card expired-card" id="successCard" style="display:none;">
+      <div class="register-icon">✅</div>
+      <div class="register-logo"><span>A</span>gapay</div>
+      <h2 style="color:#22c55e;">Account Created!</h2>
+      <p>You can now login as an admin.</p>
+      <a href="login.html" class="login-back" style="color:var(--gold);font-weight:600;">Go to Login →</a>
+    </div>
+
+    <a href="login.html" class="login-back">← Back to Login</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const email = params.get('email');
+
+    if (!token || !email) {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('expiredCard').style.display = 'block';
+    } else {
+      document.getElementById('inviteEmail').textContent = email;
+
+      const invites = JSON.parse(localStorage.getItem('agapay_adminInvites') || '[]');
+      const invite = invites.find(i => i.token === token && i.email === email);
+
+      if (!invite || invite.status === 'accepted') {
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('expiredCard').style.display = 'block';
+      }
+    }
+
+    document.getElementById('regPassConfirm').addEventListener('input', function() {
+      const pass = document.getElementById('regPass').value;
+      const confirm = this.value;
+      const el = document.getElementById('passMatch');
+      if (!confirm) { el.textContent = ''; return; }
+      if (pass === confirm) {
+        el.textContent = '✓ Passwords match';
+        el.className = 'password-match valid';
+      } else {
+        el.textContent = '✗ Passwords do not match';
+        el.className = 'password-match invalid';
+      }
+    });
+
+    function createAdminAccount() {
+      const user = document.getElementById('regUser').value.trim().toLowerCase();
+      const name = document.getElementById('regName').value.trim();
+      const pass = document.getElementById('regPass').value;
+      const confirm = document.getElementById('regPassConfirm').value;
+      const errEl = document.getElementById('regError');
+
+      if (!user || !name || !pass || !confirm) {
+        errEl.textContent = 'Please fill in all fields.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      if (pass !== confirm) {
+        errEl.textContent = 'Passwords do not match.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      if (pass.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const admins = JSON.parse(localStorage.getItem('agapay_adminInvitedUsers') || '[]');
+      const defaultAdmin = JSON.parse(localStorage.getItem('agapay_admin') || '{}');
+
+      if (admins.find(a => a.user === user) || (defaultAdmin.user === user)) {
+        errEl.textContent = 'Username already taken.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      admins.push({
+        user: user,
+        password: pass,
+        name: name,
+        email: email,
+        created: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+      });
+      localStorage.setItem('agapay_adminInvitedUsers', JSON.stringify(admins));
+
+      const invites = JSON.parse(localStorage.getItem('agapay_adminInvites') || '[]');
+      const invite = invites.find(i => i.token === token);
+      if (invite) {
+        invite.status = 'accepted';
+        localStorage.setItem('agapay_adminInvites', JSON.stringify(invites));
+      }
+
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('successCard').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
