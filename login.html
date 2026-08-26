@@ -900,7 +900,7 @@
 
     function renderMyFeedback() {
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const fb = getData('feedback', []).filter(f => f.user === user.user);
+      const fb = getData('feedback', []).filter(f => f.user === user.user && !f.deletedByMentee);
       const el = document.getElementById('myFeedbackList');
       const no = document.getElementById('noMyFeedback');
 
@@ -960,10 +960,14 @@
 
     function deleteFeedback(id) {
       if (!confirm('Delete this question?')) return;
-      let fb = getData('feedback', []);
-      fb = fb.filter(f => f.id !== id);
-      setData('feedback', fb);
-      renderMyFeedback();
+      const fb = getData('feedback', []);
+      const item = fb.find(f => f.id === id);
+      if (item) {
+        item.deletedByMentee = true;
+        item.deletedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        setData('feedback', fb);
+        renderMyFeedback();
+      }
     }
 
     function renderAllFeedback() {
@@ -975,14 +979,19 @@
       no.style.display = 'none';
 
       el.innerHTML = fb.map(f => `
-        <div class="feedback-item">
+        <div class="feedback-item" style="${f.deletedByMentee ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
           <div class="feedback-header">
-            <span class="feedback-from">👤 ${f.from}</span>
-            <span class="feedback-date">${f.date}</span>
+            <span class="feedback-from">
+              👤 ${f.from}
+              ${f.deletedByMentee ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by mentee</span>' : ''}
+            </span>
+            <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}</span>
           </div>
           <div class="feedback-message">${f.message}</div>
           ${f.reply ? `
             <div class="reply-content"><strong>Your Reply:</strong> ${f.reply}</div>
+          ` : f.deletedByMentee ? `
+            <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Mentee deleted this question.</p>
           ` : `
             <div class="feedback-reply">
               <textarea id="reply-${f.id}" placeholder="Write your reply..."></textarea>
@@ -993,7 +1002,7 @@
         </div>
       `).join('');
 
-      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply).length;
+      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply && !f.deletedByMentee).length;
     }
 
     function sendReply(id) {
