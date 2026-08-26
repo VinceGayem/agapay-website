@@ -573,6 +573,26 @@
     if (!getData('sessions', null)) setData('sessions', []);
     if (!getData('tasks', null)) setData('tasks', []);
     if (!getData('taskAnswers', null)) setData('taskAnswers', []);
+    if (!getData('loggedUsers', null)) setData('loggedUsers', []);
+
+    // ===== TRACK USERS =====
+    function trackUser(user, name, email, picture) {
+      const users = getData('loggedUsers', []);
+      const existing = users.find(u => u.user === user);
+      if (existing) {
+        existing.lastLogin = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        existing.picture = picture || existing.picture;
+      } else {
+        users.unshift({
+          user, name, email: email || user + '@phinmaed.com',
+          picture: picture || null,
+          role: 'mentee',
+          registered: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
+          lastLogin: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+        });
+      }
+      setData('loggedUsers', users);
+    }
 
     // ===== GOOGLE LOGIN =====
     function handleGoogleLogin(response) {
@@ -580,6 +600,8 @@
       const name = payload.name;
       const email = payload.email;
       const picture = payload.picture;
+
+      trackUser(email.split('@')[0], name, email, picture);
 
       sessionStorage.setItem('agapayUser', JSON.stringify({
         role: 'mentee',
@@ -607,6 +629,7 @@
       const m = getData('mentees', []).find(m => m.user === u && m.password === p);
       if (m) {
         document.getElementById('menteeError').style.display = 'none';
+        trackUser(m.user, m.name, m.email);
         sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'mentee', name: m.name, user: m.user }));
         showMenteeDashboard(m.name);
       } else {
@@ -936,22 +959,44 @@
 
     // ===== MENTEE LIST =====
     function renderMenteeList() {
+      const loggedUsers = getData('loggedUsers', []);
       const mentees = getData('mentees', []);
-      document.getElementById('menteeList').innerHTML = mentees.map(m => `
+
+      // Combine: logged users + mentee accounts (avoid duplicates)
+      const allUsers = [...loggedUsers];
+      mentees.forEach(m => {
+        if (!allUsers.find(u => u.user === m.user)) {
+          allUsers.unshift({
+            user: m.user,
+            name: m.name,
+            email: m.email,
+            picture: null,
+            registered: 'Account',
+            lastLogin: 'Never'
+          });
+        }
+      });
+
+      document.getElementById('menteeList').innerHTML = allUsers.map(u => `
         <div class="mentee-item">
           <div class="mentee-info">
-            <div class="mentee-avatar">${m.name.split(' ').map(n => n[0]).join('')}</div>
-            <div><div class="mentee-name">${m.name}</div><div class="mentee-email">${m.email || m.user}</div></div>
+            <div class="mentee-avatar">${u.picture ? `<img src="${u.picture}" style="width:45px;height:45px;border-radius:50%;">` : u.name.split(' ').map(n => n[0]).join('')}</div>
+            <div>
+              <div class="mentee-name">${u.name}</div>
+              <div class="mentee-email">${u.email || u.user}@phinmaed.com</div>
+              <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Last login: ${u.lastLogin || 'N/A'}</div>
+            </div>
           </div>
           <span class="mentee-status status-active">Active</span>
         </div>
       `).join('');
-      document.getElementById('totalMentees').textContent = mentees.length;
+
+      document.getElementById('totalMentees').textContent = allUsers.length;
 
       // Populate session mentee dropdown
       const sel = document.getElementById('sessionMentee');
       if (sel) {
-        sel.innerHTML = mentees.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
+        sel.innerHTML = allUsers.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
       }
     }
 
