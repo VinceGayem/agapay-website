@@ -378,6 +378,7 @@
 
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="showMenteeTab('home')">🏠 Home</button>
+      <button class="admin-tab" onclick="showMenteeTab('tasks')">📝 Tasks</button>
       <button class="admin-tab" onclick="showMenteeTab('posts')">📢 Announcements</button>
       <button class="admin-tab" onclick="showMenteeTab('feedback')">💬 Ask a Question</button>
     </div>
@@ -395,6 +396,12 @@
     <div class="tab-content" id="mtab-posts">
       <div id="menteePostsList"></div>
       <p id="noMenteePosts" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No announcements yet.</p>
+    </div>
+
+    <!-- Tasks (Mentee View) -->
+    <div class="tab-content" id="mtab-tasks">
+      <div id="menteeTasksList"></div>
+      <p id="noMenteeTasks" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No tasks yet.</p>
     </div>
 
     <!-- Ask a Question -->
@@ -435,6 +442,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="showTab('mentees')">👤 Mentees</button>
       <button class="admin-tab" onclick="showTab('sessions')">📅 Sessions</button>
+      <button class="admin-tab" onclick="showTab('tasks')">📝 Tasks</button>
       <button class="admin-tab" onclick="showTab('posts')">📢 Posts</button>
       <button class="admin-tab" onclick="showTab('questions')">❓ Questions</button>
       <button class="admin-tab" onclick="showTab('settings')">⚙️ Settings</button>
@@ -470,6 +478,23 @@
         <h3>📋 All Sessions</h3>
         <div id="sessionsList"></div>
         <p id="noSessions" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No sessions yet.</p>
+      </div>
+    </div>
+
+    <!-- Tasks Management -->
+    <div class="tab-content" id="tab-tasks">
+      <div class="dash-card">
+        <h3>📝 Create Task</h3>
+        <div class="form-group"><label>Task Title</label><input type="text" id="taskTitle" placeholder="e.g. Write a reflection essay"></div>
+        <div class="form-group"><label>Description</label><textarea id="taskDesc" placeholder="Describe the task requirements..."></textarea></div>
+        <div class="form-group"><label>Deadline</label><input type="date" id="taskDeadline"></div>
+        <button class="btn btn-primary" onclick="createTask()">Assign Task</button>
+        <div class="reply-saved" id="taskCreated">Task assigned to all mentees!</div>
+      </div>
+      <div class="dash-card">
+        <h3>📋 All Tasks</h3>
+        <div id="adminTasksList"></div>
+        <p id="noAdminTasks" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No tasks yet.</p>
       </div>
     </div>
 
@@ -546,6 +571,8 @@
     if (!getData('feedback', null)) setData('feedback', []);
     if (!getData('posts', null)) setData('posts', []);
     if (!getData('sessions', null)) setData('sessions', []);
+    if (!getData('tasks', null)) setData('tasks', []);
+    if (!getData('taskAnswers', null)) setData('taskAnswers', []);
 
     // ===== GOOGLE LOGIN =====
     function handleGoogleLogin(response) {
@@ -615,6 +642,7 @@
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
       updateMenteeStats(user.user);
       renderMenteePosts();
+      renderMenteeTasks();
       renderMyFeedback();
     }
 
@@ -623,6 +651,7 @@
       document.getElementById('adminDashboard').classList.add('active');
       renderMenteeList();
       renderSessionsList();
+      renderAdminTasks();
       renderAdminPosts();
       renderAllFeedback();
       updateStats();
@@ -962,6 +991,144 @@
       document.getElementById('statDone').textContent = done;
       document.getElementById('statUpcoming').textContent = upcoming;
       document.getElementById('statProgress').textContent = progress + '%';
+    }
+
+    // ===== TASKS =====
+    function createTask() {
+      const title = document.getElementById('taskTitle').value.trim();
+      const desc = document.getElementById('taskDesc').value.trim();
+      const deadline = document.getElementById('taskDeadline').value;
+      if (!title || !desc || !deadline) return alert('Please fill in all fields.');
+
+      const tasks = getData('tasks', []);
+      tasks.unshift({
+        id: Date.now(), title, desc, deadline,
+        dateCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      });
+      setData('tasks', tasks);
+
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDesc').value = '';
+      document.getElementById('taskDeadline').value = '';
+      const el = document.getElementById('taskCreated');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+
+      renderAdminTasks();
+      updateStats();
+    }
+
+    function renderAdminTasks() {
+      const tasks = getData('tasks', []);
+      const answers = getData('taskAnswers', []);
+      const el = document.getElementById('adminTasksList');
+      const no = document.getElementById('noAdminTasks');
+
+      if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = tasks.map(t => {
+        const taskAnswers = answers.filter(a => a.taskId === t.id);
+        const submitted = taskAnswers.length;
+        const mentees = getData('mentees', []).length;
+        return `
+          <div class="post-item">
+            <div class="post-header">
+              <span class="post-author"><span class="post-author-avatar">📝</span>Task</span>
+              <span class="post-date">Due: ${t.deadline}</span>
+            </div>
+            <div class="post-title">${t.title}</div>
+            <div class="post-body">${t.desc}</div>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${mentees}</p>
+            ${taskAnswers.length ? `
+              <div style="margin-top:15px;">
+                <strong style="font-size:0.9rem;">Mentee Submissions:</strong>
+                ${taskAnswers.map(a => `
+                  <div class="comment-item" style="margin-top:8px;">
+                    <div class="comment-avatar mentee-avatar">${a.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
+                    <div class="comment-content">
+                      <div class="comment-author">${a.author}</div>
+                      <div class="comment-text">${a.answer}</div>
+                      <div class="comment-time">${a.time}</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;margin-top:10px;">No submissions yet.</p>'}
+            <button class="dash-logout" style="margin-top:15px;padding:6px 14px;font-size:0.8rem;border-color:#dc2626;color:#dc2626;" onclick="deleteTask(${t.id})">Delete Task</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteTask(id) {
+      if (!confirm('Delete this task and all submissions?')) return;
+      let tasks = getData('tasks', []);
+      let answers = getData('taskAnswers', []);
+      tasks = tasks.filter(x => x.id !== id);
+      answers = answers.filter(x => x.taskId !== id);
+      setData('tasks', tasks);
+      setData('taskAnswers', answers);
+      renderAdminTasks();
+    }
+
+    function renderMenteeTasks() {
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const tasks = getData('tasks', []);
+      const answers = getData('taskAnswers', []);
+      const el = document.getElementById('menteeTasksList');
+      const no = document.getElementById('noMenteeTasks');
+
+      if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = tasks.map(t => {
+        const myAnswer = answers.find(a => a.taskId === t.id && a.user === user.user);
+        const isOverdue = new Date(t.deadline) < new Date();
+        return `
+          <div class="post-item">
+            <div class="post-header">
+              <span class="post-author"><span class="post-author-avatar">📝</span>Task</span>
+              <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${t.deadline}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
+            </div>
+            <div class="post-title">${t.title}</div>
+            <div class="post-body">${t.desc}</div>
+            ${myAnswer ? `
+              <div class="reply-content" style="margin-top:15px;">
+                <strong>Your Answer:</strong> ${myAnswer.answer}
+                <div class="comment-time" style="margin-top:5px;">Submitted: ${myAnswer.time}</div>
+              </div>
+            ` : `
+              <div class="feedback-reply" style="margin-top:15px;">
+                <textarea id="taskAnswer-${t.id}" placeholder="Write your answer here..."></textarea>
+                <button class="btn btn-primary" onclick="submitTaskAnswer(${t.id})">Submit Answer</button>
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function submitTaskAnswer(taskId) {
+      const textarea = document.getElementById('taskAnswer-' + taskId);
+      const answer = textarea.value.trim();
+      if (!answer) return alert('Please write your answer.');
+
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const answers = getData('taskAnswers', []);
+
+      // Remove existing answer for this task by this user (allow re-submit)
+      const filtered = answers.filter(a => !(a.taskId === taskId && a.user === user.user));
+
+      filtered.unshift({
+        id: Date.now(),
+        taskId,
+        user: user.user,
+        author: user.name,
+        answer,
+        time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      });
+      setData('taskAnswers', filtered);
+      renderMenteeTasks();
     }
 
     // ===== SETTINGS =====
