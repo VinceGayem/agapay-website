@@ -130,14 +130,6 @@
       document.getElementById('expiredCard').style.display = 'block';
     } else {
       document.getElementById('inviteEmail').textContent = email;
-
-      const invites = JSON.parse(localStorage.getItem('agapay_adminInvites') || '[]');
-      const invite = invites.find(i => i.token === token && i.email === email);
-
-      if (!invite || invite.status === 'accepted') {
-        document.getElementById('registerForm').style.display = 'none';
-        document.getElementById('expiredCard').style.display = 'block';
-      }
     }
 
     document.getElementById('regPassConfirm').addEventListener('input', function() {
