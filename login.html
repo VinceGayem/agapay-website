@@ -121,6 +121,7 @@
     .dashboard { display: none; width: 100%; max-width: 1000px; padding: 20px; margin-top: 80px; }
     .dashboard.active { display: block; }
     .login-wrapper.hidden { display: none; }
+    .login-wrapper { margin-top: 80px; }
 
     .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
     .dash-header h1 { color: #ffffff; font-size: 1.8rem; }
@@ -377,6 +378,27 @@
 </head>
 <body>
 
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo"><span>A</span>gapay</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About Me</a>
+        <a href="program.html">Program</a>
+        <a href="mentors.html">Mentors</a>
+        <a href="resources.html">Resources</a>
+        <a href="blog.html">Blog</a>
+        <a href="contact.html">Contact</a>
+        <a href="login.html" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.85rem; border-radius: 8px;">Login</a>
+        <button class="theme-toggle" id="themeToggle"></button>
+      </div>
+      <button class="hamburger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
   <!-- ===== LOGIN ===== -->
   <div class="login-wrapper" id="loginWrapper">
     <div class="role-switch">
@@ -427,7 +449,6 @@
         </form>
       </div>
     </div>
-    <a href="index.html" class="login-back">← Back to Home</a>
   </div>
 
   <!-- ===== MENTEE DASHBOARD ===== -->
