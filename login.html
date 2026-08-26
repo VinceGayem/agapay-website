@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Agapay Mentorship</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .login-container { width: 100%; max-width: 440px; padding: 20px; }
+
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 50px 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+
+    .login-logo { font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+    .login-logo span { color: var(--gold); }
+    .login-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 35px; }
+
+    .login-icon {
+      width: 70px; height: 70px;
+      background: rgba(212,168,67,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 25px;
+    }
+
+    .login-form .form-group { text-align: left; margin-bottom: 20px; }
+    .login-form .form-group label { font-size: 0.85rem; margin-bottom: 6px; }
+    .login-form .form-group input { padding: 14px 16px; font-size: 0.95rem; }
+    .login-form .btn { width: 100%; justify-content: center; padding: 15px; font-size: 1rem; margin-top: 5px; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 25px 0;
+      gap: 15px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+    .divider span {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .google-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 13px 20px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .google-btn:hover {
+      border-color: #4285f4;
+      background: rgba(66, 133, 244, 0.05);
+    }
+    .google-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .login-error {
+      background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px;
+      font-size: 0.85rem; margin-bottom: 20px; display: none; text-align: left;
+    }
+    [data-theme="dark"] .login-error { background: rgba(220,38,38,0.15); color: #f87171; }
+
+    .login-footer { margin-top: 25px; font-size: 0.85rem; color: var(--text-light); }
+    .login-footer a { color: var(--gold); font-weight: 600; }
+
+    .login-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.7); margin-top: 10px; font-size: 0.9rem; transition: var(--transition);
+    }
+    .login-back:hover { color: var(--gold); }
+
+    .role-switch { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
+
+    .role-btn {
+      padding: 10px 24px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.15);
+      background: transparent; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: var(--transition); font-family: inherit;
+    }
+    .role-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.1); }
+    .role-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Dashboard */
+    .dashboard { display: none; width: 100%; max-width: 1000px; padding: 20px; margin-top: 80px; }
+    .dashboard.active { display: block; }
+    .login-wrapper.hidden { display: none; }
+
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+    .dash-header h1 { color: #ffffff; font-size: 1.8rem; }
+    .dash-header h1 span { color: var(--gold); }
+    .dash-welcome { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
+
+    .dash-card {
+      background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 20px;
+      box-shadow: var(--shadow); border: 1px solid var(--gray-200); color: var(--text);
+    }
+    .dash-card h3 { font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    .dash-card p { color: var(--text-light); font-size: 0.95rem; line-height: 1.8; }
+
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+    .dash-stat { background: rgba(212,168,67,0.08); border-radius: 12px; padding: 20px; text-align: center; }
+    .dash-stat h4 { font-size: 1.8rem; color: var(--gold); font-weight: 700; }
+    .dash-stat p { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
+
+    .dash-logout {
+      background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #ffffff;
+      padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
+      transition: var(--transition); font-family: inherit;
+    }
+    .dash-logout:hover { border-color: #dc2626; color: #dc2626; }
+
+    /* Tabs */
+    .admin-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+    .admin-tab {
+      padding: 10px 20px; border-radius: 8px; border: none; background: rgba(212,168,67,0.08);
+      color: var(--text-light); font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      transition: var(--transition); font-family: inherit;
+    }
+    .admin-tab.active { background: var(--gold); color: var(--navy); }
+    .admin-tab:hover:not(.active) { background: rgba(212,168,67,0.15); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Mentee List */
+    .mentee-list { display: flex; flex-direction: column; gap: 12px; }
+    .mentee-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg-alt); padding: 18px 22px; border-radius: 12px;
+      border: 1px solid var(--gray-200); transition: var(--transition);
+    }
+    .mentee-item:hover { border-color: var(--gold); }
+    .mentee-info { display: flex; align-items: center; gap: 15px; }
+    .mentee-avatar {
+      width: 45px; height: 45px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: var(--gold); font-weight: 700;
+    }
+    .mentee-name { font-weight: 600; font-size: 0.95rem; }
+    .mentee-email { font-size: 0.8rem; color: var(--text-light); }
+    .mentee-status { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-active { background: rgba(34,197,94,0.1); color: #22c55e; }
+
+    /* Posts */
+    .post-item {
+      background: var(--bg-alt); border-radius: 14px; padding: 25px; margin-bottom: 20px;
+      border: 1px solid var(--gray-200); transition: var(--transition);
+    }
+    .post-item:hover { border-color: rgba(212,168,67,0.3); }
+
+    .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .post-author { font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .post-author-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: var(--navy); font-weight: 700;
+    }
+    .post-date { font-size: 0.8rem; color: var(--text-light); }
+    .post-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+    .post-body { color: var(--text-light); line-height: 1.8; margin-bottom: 18px; font-size: 0.95rem; }
+
+    .post-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 600; margin-bottom: 15px;
+    }
+    .tag-announcement { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .tag-update { background: rgba(34,197,94,0.1); color: #22c55e; }
+    .tag-important { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+    /* Comments */
+    .comments-section { border-top: 1px solid var(--gray-200); padding-top: 15px; }
+    .comments-header { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    .comment-item {
+      display: flex; gap: 12px; margin-bottom: 12px; padding: 12px 15px;
+      background: var(--card-bg); border-radius: 10px; border: 1px solid var(--gray-200);
+    }
+    .comment-avatar {
+      width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700;
+    }
+    .comment-avatar.admin-avatar { background: var(--gold); color: var(--navy); }
+    .comment-avatar.mentee-avatar { background: var(--navy); color: #fff; }
+
+    [data-theme="dark"] .comment-avatar.mentee-avatar { background: #2a2a3e; }
+
+    .comment-content { flex: 1; }
+    .comment-author { font-weight: 600; font-size: 0.85rem; }
+    .comment-text { font-size: 0.9rem; color: var(--text-light); margin-top: 3px; line-height: 1.6; }
+    .comment-time { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+
+    .comment-form { display: flex; gap: 10px; margin-top: 12px; }
+    .comment-form input {
+      flex: 1; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text);
+      transition: var(--transition);
+    }
+    .comment-form input:focus { outline: none; border-color: var(--gold); }
+    .comment-form .btn { padding: 10px 20px; font-size: 0.85rem; margin: 0; }
+
+    /* Feedback */
+    .feedback-list { display: flex; flex-direction: column; gap: 15px; }
+    .feedback-item {
+      background: var(--bg-alt); border-radius: 12px; padding: 22px;
+      border: 1px solid var(--gray-200);
+    }
+    .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .feedback-from { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .feedback-date { font-size: 0.8rem; color: var(--text-light); }
+    .feedback-message {
+      color: var(--text-light); font-size: 0.95rem; line-height: 1.7; margin-bottom: 15px;
+      padding: 12px 15px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--gray-200);
+    }
+
+    .feedback-reply textarea {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text);
+      resize: vertical; min-height: 80px; transition: var(--transition);
+    }
+    .feedback-reply textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+    .feedback-reply .btn { margin-top: 10px; padding: 10px 24px; font-size: 0.85rem; }
+
+    .reply-saved {
+      background: rgba(34,197,94,0.1); color: #22c55e; padding: 8px 14px; border-radius: 6px;
+      font-size: 0.8rem; margin-top: 8px; display: none; font-weight: 600;
+    }
+    .reply-content {
+      margin-top: 10px; padding: 12px 15px; background: rgba(212,168,67,0.05);
+      border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0;
+      font-size: 0.9rem; color: var(--text); line-height: 1.7;
+    }
+    .reply-content strong { color: var(--gold); }
+
+    /* Settings */
+    .settings-form .form-group { margin-bottom: 20px; }
+    .settings-form label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+    .settings-form input {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition);
+    }
+    .settings-form input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+    .settings-section { margin-bottom: 30px; }
+    .settings-section h4 { font-size: 1rem; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
+
+    .form-group textarea {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
+      resize: vertical; min-height: 100px; transition: var(--transition);
+    }
+    .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+
+    .form-group select {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition);
+    }
+    .form-group select:focus { outline: none; border-color: var(--gold); }
+
+    @media (max-width: 768px) {
+      .login-card { padding: 35px 25px; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .dash-stats { grid-template-columns: repeat(3, 1fr); }
+      .dash-header { flex-direction: column; gap: 15px; text-align: center; }
+      .mentee-item { flex-direction: column; gap: 10px; text-align: center; }
+      .feedback-header { flex-direction: column; gap: 5px; }
+      .comment-form { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== LOGIN ===== -->
+  <div class="login-wrapper" id="loginWrapper">
+    <div class="role-switch">
+      <button class="role-btn active" id="btnMentee" onclick="switchRole('mentee')">Mentee</button>
+      <button class="role-btn" id="btnAdmin" onclick="switchRole('admin')">Admin</button>
+    </div>
+
+    <div class="login-container" id="menteeLogin">
+      <div class="login-card fade-up">
+        <div class="login-icon">🎓</div>
+        <div class="login-logo"><span>A</span>gapay</div>
+        <p class="login-subtitle">Mentee Login Portal</p>
+        <div class="login-error" id="menteeError">Incorrect username or password.</div>
+        <form class="login-form" id="menteeForm">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="menteeUser" placeholder="Enter your username" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="menteePass" placeholder="Enter your password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+        <div class="divider"><span>or</span></div>
+        <div id="g_id_onload" data-client_id="830300225606-d40nst2c74060tuubjb4gttmue3d8o8a.apps.googleusercontent.com" data-callback="handleGoogleLogin"></div>
+        <div class="g_id_signin" data-type="standard"></div>
+        <div class="login-footer"><p>Don't have an account? <a href="contact.html">Contact your mentor</a></p></div>
+      </div>
+    </div>
+
+    <div class="login-container" id="adminLogin" style="display:none;">
+      <div class="login-card fade-up">
+        <div class="login-icon">🛡️</div>
+        <div class="login-logo"><span>A</span>gapay</div>
+        <p class="login-subtitle">Admin Portal</p>
+        <div class="login-error" id="adminError">Invalid admin credentials.</div>
+        <form class="login-form" id="adminForm">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="adminUser" placeholder="Enter admin username" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="adminPass" placeholder="Enter admin password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+      </div>
+    </div>
+    <a href="index.html" class="login-back">← Back to Home</a>
+  </div>
+
+  <!-- ===== MENTEE DASHBOARD ===== -->
+  <div class="dashboard" id="menteeDashboard">
+    <div class="dash-header">
+      <div>
+        <h1>Welcome, <span id="menteeName">Mentee</span>!</h1>
+        <p class="dash-welcome">Here's your mentorship dashboard.</p>
+      </div>
+      <button class="dash-logout" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="dash-stats">
+      <div class="dash-stat"><h4>5</h4><p>Sessions Done</p></div>
+      <div class="dash-stat"><h4>2</h4><p>Upcoming</p></div>
+      <div class="dash-stat"><h4>85%</h4><p>Progress</p></div>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="showMenteeTab('home')">🏠 Home</button>
+      <button class="admin-tab" onclick="showMenteeTab('posts')">📢 Announcements</button>
+      <button class="admin-tab" onclick="showMenteeTab('feedback')">💬 Ask a Question</button>
+    </div>
+
+    <!-- Home -->
+    <div class="tab-content active" id="mtab-home">
+      <div class="dash-grid">
+        <div class="dash-card"><h3>📋 My Tasks</h3><p>Complete your weekly reflection journal and submit it before the deadline. Review your goals for this month.</p></div>
+        <div class="dash-card"><h3>📅 Next Session</h3><p>Your next mentoring session is scheduled this week. Prepare your questions and updates on your progress.</p></div>
+      </div>
+      <div class="dash-card"><h3>📚 Resources</h3><p>Check the <a href="resources.html" style="color:var(--gold);font-weight:600;">Resources page</a> for study guides, time management tips, and career readiness materials.</p></div>
+    </div>
+
+    <!-- Announcements (Mentee View) -->
+    <div class="tab-content" id="mtab-posts">
+      <div id="menteePostsList"></div>
+      <p id="noMenteePosts" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No announcements yet.</p>
+    </div>
+
+    <!-- Ask a Question -->
+    <div class="tab-content" id="mtab-feedback">
+      <div class="dash-card">
+        <h3>💬 Ask Your Mentor</h3>
+        <p style="margin-bottom:15px;">Have a question or concern? Send it here and your mentor will respond.</p>
+        <div class="feedback-reply">
+          <textarea id="menteeFeedback" placeholder="Type your question or feedback here..."></textarea>
+          <button class="btn btn-primary" onclick="submitFeedback()">Send Question</button>
+          <div class="reply-saved" id="feedbackSent">Question sent successfully!</div>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>📬 Your Questions</h3>
+        <div id="myFeedbackList"></div>
+        <p id="noMyFeedback" style="text-align:center;color:var(--text-light);padding:20px;display:none;">You haven't asked anything yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN DASHBOARD ===== -->
+  <div class="dashboard" id="adminDashboard">
+    <div class="dash-header">
+      <div>
+        <h1>Admin <span>Panel</span></h1>
+        <p class="dash-welcome">Manage mentees, post announcements, and respond to questions.</p>
+      </div>
+      <button class="dash-logout" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="dash-stats">
+      <div class="dash-stat"><h4 id="totalMentees">0</h4><p>Total Mentees</p></div>
+      <div class="dash-stat"><h4 id="totalPosts">0</h4><p>Posts</p></div>
+      <div class="dash-stat"><h4 id="totalQuestions">0</h4><p>New Questions</p></div>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="showTab('mentees')">👤 Mentees</button>
+      <button class="admin-tab" onclick="showTab('posts')">📢 Posts</button>
+      <button class="admin-tab" onclick="showTab('questions')">❓ Questions</button>
+      <button class="admin-tab" onclick="showTab('settings')">⚙️ Settings</button>
+    </div>
+
+    <!-- Mentees -->
+    <div class="tab-content active" id="tab-mentees">
+      <div class="dash-card"><h3>👤 All Mentees</h3><div class="mentee-list" id="menteeList"></div></div>
+    </div>
+
+    <!-- Posts -->
+    <div class="tab-content" id="tab-posts">
+      <div class="dash-card">
+        <h3>📝 Create Announcement</h3>
+        <div class="form-group"><label>Title</label><input type="text" id="postTitle" placeholder="Announcement title"></div>
+        <div class="form-group"><label>Tag</label>
+          <select id="postTag">
+            <option value="announcement">📢 Announcement</option>
+            <option value="update">✅ Update</option>
+            <option value="important">❗ Important</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Message</label><textarea id="postBody" placeholder="Write your announcement..."></textarea></div>
+        <button class="btn btn-primary" onclick="createPost()">Publish Post</button>
+        <div class="reply-saved" id="postCreated">Post published!</div>
+      </div>
+      <div class="dash-card"><h3>📢 All Posts</h3><div id="adminPostsList"></div><p id="noAdminPosts" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No posts yet.</p></div>
+    </div>
+
+    <!-- Questions -->
+    <div class="tab-content" id="tab-questions">
+      <div class="dash-card">
+        <h3>❓ Mentee Questions</h3>
+        <div class="feedback-list" id="allFeedbackList"></div>
+        <p id="noFeedback" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No questions yet.</p>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="tab-content" id="tab-settings">
+      <div class="dash-card">
+        <h3>⚙️ Account Settings</h3>
+        <div class="settings-form">
+          <div class="settings-section">
+            <h4>Change Admin Password</h4>
+            <div class="form-group"><label>Current Password</label><input type="password" id="currentPass" placeholder="Enter current password"></div>
+            <div class="form-group"><label>New Password</label><input type="password" id="newPass" placeholder="Enter new password"></div>
+            <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPass" placeholder="Confirm new password"></div>
+            <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+            <div class="reply-saved" id="passUpdated">Password updated!</div>
+          </div>
+          <div class="settings-section">
+            <h4>Add New Mentee</h4>
+            <div class="form-group"><label>Username</label><input type="text" id="newMenteeUser" placeholder="Enter username"></div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="newMenteeName" placeholder="Enter full name"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="newMenteePass" placeholder="Enter password"></div>
+            <button class="btn btn-primary" onclick="addMentee()">Add Mentee</button>
+            <div class="reply-saved" id="menteeAdded">Mentee added!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    // ===== DATA =====
+    function getData(k, f) { const d = localStorage.getItem('agapay_' + k); return d ? JSON.parse(d) : f; }
+    function setData(k, v) { localStorage.setItem('agapay_' + k, JSON.stringify(v)); }
+
+    const defaultMentees = [
+      { user: 'mentee1', password: 'agapay2026', name: 'Juan Dela Cruz', email: 'juan.delacruz@phinmaed.com' },
+      { user: 'mentee2', password: 'agapay2026', name: 'Maria Santos', email: 'maria.santos@phinmaed.com' },
+      { user: 'mentee3', password: 'agapay2026', name: 'Jose Reyes', email: 'jose.reyes@phinmaed.com' },
+      { user: 'mentee4', password: 'agapay2026', name: 'Ana Garcia', email: 'ana.garcia@phinmaed.com' },
+    ];
+    const defaultAdmin = { user: 'admin', password: 'agapayadmin' };
+
+    if (!getData('mentees', null)) setData('mentees', defaultMentees);
+    if (!getData('admin', null)) setData('admin', defaultAdmin);
+    if (!getData('feedback', null)) setData('feedback', []);
+    if (!getData('posts', null)) setData('posts', []);
+
+    // ===== GOOGLE LOGIN =====
+    function handleGoogleLogin(response) {
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      const name = payload.name;
+      const email = payload.email;
+      const picture = payload.picture;
+
+      sessionStorage.setItem('agapayUser', JSON.stringify({
+        role: 'mentee',
+        name: name,
+        user: email.split('@')[0],
+        email: email,
+        picture: picture
+      }));
+      showMenteeDashboard(name, picture);
+    }
+
+    // ===== ROLE SWITCH =====
+    function switchRole(r) {
+      document.getElementById('btnMentee').classList.toggle('active', r === 'mentee');
+      document.getElementById('btnAdmin').classList.toggle('active', r === 'admin');
+      document.getElementById('menteeLogin').style.display = r === 'mentee' ? 'block' : 'none';
+      document.getElementById('adminLogin').style.display = r === 'admin' ? 'block' : 'none';
+    }
+
+    // ===== LOGIN =====
+    document.getElementById('menteeForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const u = document.getElementById('menteeUser').value.trim().toLowerCase();
+      const p = document.getElementById('menteePass').value;
+      const m = getData('mentees', []).find(m => m.user === u && m.password === p);
+      if (m) {
+        document.getElementById('menteeError').style.display = 'none';
+        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'mentee', name: m.name, user: m.user }));
+        showMenteeDashboard(m.name);
+      } else {
+        document.getElementById('menteeError').style.display = 'block';
+        document.getElementById('menteePass').value = '';
+      }
+    });
+
+    document.getElementById('adminForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const u = document.getElementById('adminUser').value.trim().toLowerCase();
+      const p = document.getElementById('adminPass').value;
+      const a = getData('admin', defaultAdmin);
+      if (u === a.user && p === a.password) {
+        document.getElementById('adminError').style.display = 'none';
+        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'admin', name: 'Admin' }));
+        showAdminDashboard();
+      } else {
+        document.getElementById('adminError').style.display = 'block';
+        document.getElementById('adminPass').value = '';
+      }
+    });
+
+    // ===== SHOW DASHBOARDS =====
+    function showMenteeDashboard(name, picture) {
+      document.getElementById('loginWrapper').classList.add('hidden');
+      document.getElementById('menteeDashboard').classList.add('active');
+      document.getElementById('menteeName').textContent = name;
+      if (picture) {
+        const header = document.querySelector('#menteeDashboard .dash-header h1');
+        header.innerHTML = `<img src="${picture}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">Welcome, <span id="menteeName">${name}</span>!`;
+      }
+      renderMenteePosts();
+      renderMyFeedback();
+    }
+
+    function showAdminDashboard() {
+      document.getElementById('loginWrapper').classList.add('hidden');
+      document.getElementById('adminDashboard').classList.add('active');
+      renderMenteeList();
+      renderAdminPosts();
+      renderAllFeedback();
+      updateStats();
+    }
+
+    function logout() {
+      sessionStorage.removeItem('agapayUser');
+      document.getElementById('loginWrapper').classList.remove('hidden');
+      document.getElementById('menteeDashboard').classList.remove('active');
+      document.getElementById('adminDashboard').classList.remove('active');
+      document.getElementById('menteeForm').reset();
+      document.getElementById('adminForm').reset();
+    }
+
+    // ===== MENTEE TABS =====
+    function showMenteeTab(t) {
+      document.querySelectorAll('#menteeDashboard .admin-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#menteeDashboard .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[onclick="showMenteeTab('${t}')"]`).classList.add('active');
+      document.getElementById('mtab-' + t).classList.add('active');
+      if (t === 'posts') renderMenteePosts();
+      if (t === 'feedback') renderMyFeedback();
+    }
+
+    // ===== ADMIN TABS =====
+    function showTab(t) {
+      document.querySelectorAll('#adminDashboard .admin-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[onclick="showTab('${t}')"]`).classList.add('active');
+      document.getElementById('tab-' + t).classList.add('active');
+    }
+
+    // ===== ADMIN: POSTS =====
+    function createPost() {
+      const title = document.getElementById('postTitle').value.trim();
+      const body = document.getElementById('postBody').value.trim();
+      const tag = document.getElementById('postTag').value;
+      if (!title || !body) return alert('Please fill in all fields.');
+
+      const posts = getData('posts', []);
+      posts.unshift({
+        id: Date.now(), title, body, tag,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        comments: []
+      });
+      setData('posts', posts);
+
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postBody').value = '';
+      const el = document.getElementById('postCreated');
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+
+      renderAdminPosts();
+      updateStats();
+    }
+
+    function renderAdminPosts() {
+      const posts = getData('posts', []);
+      const el = document.getElementById('adminPostsList');
+      const no = document.getElementById('noAdminPosts');
+
+      if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = posts.map(p => `
+        <div class="post-item">
+          <div class="post-header">
+            <span class="post-author"><span class="post-author-avatar">VG</span>Vince Gayem</span>
+            <span class="post-date">${p.date}</span>
+          </div>
+          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
+          <div class="post-title">${p.title}</div>
+          <div class="post-body">${p.body}</div>
+          <div class="comments-section">
+            <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
+            ${p.comments.map(c => `
+              <div class="comment-item">
+                <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
+                <div class="comment-content">
+                  <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                  <div class="comment-text">${c.text}</div>
+                  <div class="comment-time">${c.time}</div>
+                </div>
+              </div>
+            `).join('')}
+            <div class="comment-form">
+              <input type="text" id="adminComment-${p.id}" placeholder="Write a comment as admin...">
+              <button class="btn btn-primary" onclick="addComment(${p.id}, 'admin')">Reply</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addComment(postId, role) {
+      const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId);
+      const text = input.value.trim();
+      if (!text) return;
+
+      const posts = getData('posts', []);
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      post.comments.push({
+        author: user.name,
+        role: role,
+        text: text,
+        time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      });
+      setData('posts', posts);
+      input.value = '';
+
+      if (role === 'admin') renderAdminPosts();
+      else renderMenteePosts();
+    }
+
+    function renderMenteePosts() {
+      const posts = getData('posts', []);
+      const el = document.getElementById('menteePostsList');
+      const no = document.getElementById('noMenteePosts');
+
+      if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = posts.map(p => `
+        <div class="post-item">
+          <div class="post-header">
+            <span class="post-author"><span class="post-author-avatar">VG</span>Vince Gayem</span>
+            <span class="post-date">${p.date}</span>
+          </div>
+          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
+          <div class="post-title">${p.title}</div>
+          <div class="post-body">${p.body}</div>
+          <div class="comments-section">
+            <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
+            ${p.comments.map(c => `
+              <div class="comment-item">
+                <div class="comment-avatar ${c.role === 'admin' ? 'admin-avatar' : 'mentee-avatar'}">${c.author.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
+                <div class="comment-content">
+                  <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                  <div class="comment-text">${c.text}</div>
+                  <div class="comment-time">${c.time}</div>
+                </div>
+              </div>
+            `).join('')}
+            <div class="comment-form">
+              <input type="text" id="menteeComment-${p.id}" placeholder="Write a comment...">
+              <button class="btn btn-primary" onclick="addComment(${p.id}, 'mentee')">Comment</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== FEEDBACK / QUESTIONS =====
+    function submitFeedback() {
+      const text = document.getElementById('menteeFeedback').value.trim();
+      if (!text) return;
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const fb = getData('feedback', []);
+      fb.unshift({
+        id: Date.now(), from: user.name, user: user.user, message: text,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        reply: null
+      });
+      setData('feedback', fb);
+      document.getElementById('menteeFeedback').value = '';
+      const el = document.getElementById('feedbackSent');
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+      renderMyFeedback();
+      updateStats();
+    }
+
+    function renderMyFeedback() {
+      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
+      const fb = getData('feedback', []).filter(f => f.user === user.user);
+      const el = document.getElementById('myFeedbackList');
+      const no = document.getElementById('noMyFeedback');
+
+      if (!fb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = fb.map(f => `
+        <div class="feedback-item">
+          <div class="feedback-header">
+            <span class="feedback-from">📝 You</span>
+            <span class="feedback-date">${f.date}</span>
+          </div>
+          <div class="feedback-message">${f.message}</div>
+          ${f.reply ? `
+            <div class="reply-content"><strong>Admin Reply:</strong> ${f.reply}</div>
+          ` : `<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">⏳ Waiting for reply...</p>`}
+        </div>
+      `).join('');
+    }
+
+    function renderAllFeedback() {
+      const fb = getData('feedback', []);
+      const el = document.getElementById('allFeedbackList');
+      const no = document.getElementById('noFeedback');
+
+      if (!fb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = fb.map(f => `
+        <div class="feedback-item">
+          <div class="feedback-header">
+            <span class="feedback-from">👤 ${f.from}</span>
+            <span class="feedback-date">${f.date}</span>
+          </div>
+          <div class="feedback-message">${f.message}</div>
+          ${f.reply ? `
+            <div class="reply-content"><strong>Your Reply:</strong> ${f.reply}</div>
+          ` : `
+            <div class="feedback-reply">
+              <textarea id="reply-${f.id}" placeholder="Write your reply..."></textarea>
+              <button class="btn btn-primary" onclick="sendReply(${f.id})">Send Reply</button>
+              <div class="reply-saved" id="saved-${f.id}">Reply sent!</div>
+            </div>
+          `}
+        </div>
+      `).join('');
+
+      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply).length;
+    }
+
+    function sendReply(id) {
+      const text = document.getElementById('reply-' + id).value.trim();
+      if (!text) return;
+      const fb = getData('feedback', []);
+      const item = fb.find(f => f.id === id);
+      if (item) { item.reply = text; setData('feedback', fb); renderAllFeedback(); }
+    }
+
+    // ===== MENTEE LIST =====
+    function renderMenteeList() {
+      const mentees = getData('mentees', []);
+      document.getElementById('menteeList').innerHTML = mentees.map(m => `
+        <div class="mentee-item">
+          <div class="mentee-info">
+            <div class="mentee-avatar">${m.name.split(' ').map(n => n[0]).join('')}</div>
+            <div><div class="mentee-name">${m.name}</div><div class="mentee-email">${m.email || m.user}</div></div>
+          </div>
+          <span class="mentee-status status-active">Active</span>
+        </div>
+      `).join('');
+      document.getElementById('totalMentees').textContent = mentees.length;
+    }
+
+    // ===== SETTINGS =====
+    function changePassword() {
+      const c = document.getElementById('currentPass').value;
+      const n = document.getElementById('newPass').value;
+      const cf = document.getElementById('confirmPass').value;
+      const a = getData('admin', defaultAdmin);
+      if (c !== a.password) return alert('Current password incorrect.');
+      if (n !== cf) return alert('Passwords do not match.');
+      if (n.length < 6) return alert('Password must be at least 6 characters.');
+      a.password = n; setData('admin', a);
+      document.getElementById('currentPass').value = '';
+      document.getElementById('newPass').value = '';
+      document.getElementById('confirmPass').value = '';
+      const el = document.getElementById('passUpdated');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+    }
+
+    function addMentee() {
+      const u = document.getElementById('newMenteeUser').value.trim().toLowerCase();
+      const n = document.getElementById('newMenteeName').value.trim();
+      const p = document.getElementById('newMenteePass').value;
+      if (!u || !n || !p) return alert('Fill in all fields.');
+      const ms = getData('mentees', []);
+      if (ms.find(m => m.user === u)) return alert('Username exists.');
+      ms.push({ user: u, password: p, name: n, email: u + '@phinmaed.com' });
+      setData('mentees', ms);
+      document.getElementById('newMenteeUser').value = '';
+      document.getElementById('newMenteeName').value = '';
+      document.getElementById('newMenteePass').value = '';
+      const el = document.getElementById('menteeAdded');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+      renderMenteeList();
+    }
+
+    function updateStats() {
+      const fb = getData('feedback', []);
+      const posts = getData('posts', []);
+      document.getElementById('totalPosts').textContent = posts.length;
+      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply).length;
+    }
+
+    // ===== SESSION CHECK =====
+    const session = sessionStorage.getItem('agapayUser');
+    if (session) {
+      const u = JSON.parse(session);
+      if (u.role === 'mentee') showMenteeDashboard(u.name, u.picture);
+      else if (u.role === 'admin') showAdminDashboard();
+    }
+  </script>
+</body>
+</html>
