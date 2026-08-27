@@ -796,7 +796,7 @@
         picture: picture || null, role: 'mentee',
         registered: now, lastLogin: now
       };
-      db.ref('agapay/loggedUsers/' + user).set(userData);
+      return db.ref('agapay/loggedUsers/' + user).set(userData);
     }
 
     // ===== GOOGLE LOGIN =====
@@ -806,7 +806,10 @@
       const email = payload.email;
       const picture = payload.picture;
 
-      trackUser(email.split('@')[0], name, email, picture);
+      trackUser(email.split('@')[0], name, email, picture).then(() => {
+        // Force re-render after Firebase write completes
+        setTimeout(() => renderActiveViews('loggedUsers'), 500);
+      });
 
       sessionStorage.setItem('agapayUser', JSON.stringify({
         role: 'mentee',
@@ -875,7 +878,9 @@
       if (m) {
         loginAttempts.mentee = 0;
         document.getElementById('menteeError').style.display = 'none';
-        trackUser(m.user, m.name, m.email);
+        trackUser(m.user, m.name, m.email).then(() => {
+          setTimeout(() => renderActiveViews('loggedUsers'), 500);
+        });
         sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'mentee', name: m.name, user: m.user }));
         showMenteeDashboard(m.name);
       } else {
