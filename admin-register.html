@@ -139,7 +139,7 @@
       }
 
       // Check if profile already exists for this email
-      const { data: existing } = await supabase.from('profiles').select('id').eq('email', emailVal).single();
+      const { data: existing } = await db.from('profiles').select('id').eq('email', emailVal).single();
       if (existing) {
         errEl.textContent = 'An account with this email already exists.';
         errEl.style.display = 'block';
@@ -147,7 +147,7 @@
       }
 
       // Create auth user
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await db.auth.signUp({
         email: emailVal,
         password: pass,
         options: { data: { name, role: 'admin' } }
@@ -161,7 +161,7 @@
 
       // Create admin profile
       if (data.user) {
-        await supabase.from('profiles').insert({
+        await db.from('profiles').insert({
           user_id: data.user.id,
           name,
           email: emailVal,

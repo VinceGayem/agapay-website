@@ -464,7 +464,7 @@
     // ===== AUTH: SIGN IN WITH GOOGLE =====
     async function signInWithGoogle() {
       console.log('Starting Google sign in...');
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await db.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + '/login.html' }
       });
@@ -485,7 +485,7 @@
 
       if (!email || !pass) { errEl.textContent = 'Fill in all fields.'; errEl.style.display = 'block'; return; }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
       if (error) { errEl.textContent = error.message || 'Login failed.'; errEl.style.display = 'block'; return; }
 
       errEl.style.display = 'none';
@@ -494,7 +494,7 @@
 
     // ===== AUTH: SIGN OUT =====
     async function signOut() {
-      await supabase.auth.signOut();
+      await db.auth.signOut();
       stopRealtime();
       currentUser = null;
       document.getElementById('loginWrapper').style.display = '';
@@ -547,7 +547,7 @@
 
     // ===== AUTH: CHECK IF ADMIN =====
     async function checkIsAdmin(email) {
-      const { data } = await supabase.from('profiles').select('role').eq('email', email).eq('role', 'admin').single();
+      const { data } = await db.from('profiles').select('role').eq('email', email).eq('role', 'admin').single();
       return !!data;
     }
 
@@ -630,7 +630,7 @@
     }
 
     function stopRealtime() {
-      realtimeChannels.forEach(ch => supabase.removeChannel(ch));
+      realtimeChannels.forEach(ch => db.removeChannel(ch));
       realtimeChannels = [];
     }
 
@@ -653,7 +653,7 @@
 
     // ===== ADMIN: MENTEE LIST =====
     async function renderMenteeList() {
-      const { data: profiles } = await supabase.from('profiles').select('*').eq('role', 'mentee').order('created_at', { ascending: false });
+      const { data: profiles } = await db.from('profiles').select('*').eq('role', 'mentee').order('created_at', { ascending: false });
       const el = document.getElementById('menteeList');
       if (!profiles?.length) { el.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees yet.</p>'; document.getElementById('totalMentees').textContent = '0'; return; }
       el.innerHTML = profiles.map(p => `
@@ -677,14 +677,14 @@
 
     // ===== ADMIN: POSTS =====
     async function renderAdminPosts() {
-      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+      const { data: posts } = await db.from('posts').select('*').order('created_at', { ascending: false });
       const el = document.getElementById('adminPostsList');
       const no = document.getElementById('noAdminPosts');
       if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
       no.style.display = 'none';
 
       el.innerHTML = await Promise.all(posts.map(async p => {
-        const { data: comments } = await supabase.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
+        const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
         return `
         <div class="post-item">
@@ -732,7 +732,7 @@
       const body = document.getElementById('postBody').value.trim();
       const tag = document.getElementById('postTag').value;
       if (!title || !body) { alert('Fill in all fields.'); return; }
-      await supabase.from('posts').insert({ title, body, tag, created_by: currentUser.name });
+      await db.from('posts').insert({ title, body, tag, created_by: currentUser.name });
       document.getElementById('postTitle').value = '';
       document.getElementById('postBody').value = '';
       flash('postCreated');
@@ -754,13 +754,13 @@
       const title = document.getElementById('post-edit-title-' + id).value.trim();
       const body = document.getElementById('post-edit-body-' + id).value.trim();
       if (!title || !body) { alert('Title and body required.'); return; }
-      await supabase.from('posts').update({ title, body }).eq('id', id);
+      await db.from('posts').update({ title, body }).eq('id', id);
     }
 
     async function deletePost(id) {
       if (!confirm('Delete this post and all comments?')) return;
-      await supabase.from('comments').delete().eq('post_id', id);
-      await supabase.from('posts').delete().eq('id', id);
+      await db.from('comments').delete().eq('post_id', id);
+      await db.from('posts').delete().eq('id', id);
     }
 
     // ===== COMMENTS =====
@@ -768,7 +768,7 @@
       const input = document.getElementById(role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId;
       const text = input.value.trim();
       if (!text) return;
-      await supabase.from('comments').insert({
+      await db.from('comments').insert({
         post_id: postId,
         author: currentUser.name,
         user_id: currentUser.id,
@@ -780,19 +780,19 @@
 
     async function deleteComment(id) {
       if (!confirm('Delete this comment?')) return;
-      await supabase.from('comments').delete().eq('id', id);
+      await db.from('comments').delete().eq('id', id);
     }
 
     // ===== MENTEE: POSTS =====
     async function renderMenteePosts() {
-      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+      const { data: posts } = await db.from('posts').select('*').order('created_at', { ascending: false });
       const el = document.getElementById('menteePostsList');
       const no = document.getElementById('noMenteePosts');
       if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
       no.style.display = 'none';
 
       el.innerHTML = await Promise.all(posts.map(async p => {
-        const { data: comments } = await supabase.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
+        const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
         return `
         <div class="post-item">
@@ -826,7 +826,7 @@
       const dTime = document.getElementById('taskDeadlineTime').value;
       if (!title || !description || !dDate || !dTime) { alert('Fill in all fields.'); return; }
       const deadline = dDate + 'T' + dTime;
-      await supabase.from('tasks').insert({ title, description, deadline });
+      await db.from('tasks').insert({ title, description, deadline });
       document.getElementById('taskTitle').value = '';
       document.getElementById('taskDesc').value = '';
       document.getElementById('taskDeadline').value = '';
@@ -835,9 +835,9 @@
     }
 
     async function renderAdminTasks() {
-      const { data: tasks } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      const { data: answers } = await supabase.from('task_answers').select('*');
-      const { data: mentees } = await supabase.from('profiles').select('*').eq('role', 'mentee');
+      const { data: tasks } = await db.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data: answers } = await db.from('task_answers').select('*');
+      const { data: mentees } = await db.from('profiles').select('*').eq('role', 'mentee');
       const el = document.getElementById('adminTasksList');
       const no = document.getElementById('noAdminTasks');
       const menteeCount = mentees?.length || 0;
@@ -894,19 +894,19 @@
       const dTime = document.getElementById('task-edit-time-' + id).value;
       if (!title || !desc || !dDate) { alert('All fields required.'); return; }
       const deadline = dDate + (dTime ? 'T' + dTime : '');
-      await supabase.from('tasks').update({ title, description: desc, deadline }).eq('id', id);
+      await db.from('tasks').update({ title, description: desc, deadline }).eq('id', id);
     }
 
     async function deleteTask(id) {
       if (!confirm('Delete this task and all submissions?')) return;
-      await supabase.from('task_answers').delete().eq('task_id', id);
-      await supabase.from('tasks').delete().eq('id', id);
+      await db.from('task_answers').delete().eq('task_id', id);
+      await db.from('tasks').delete().eq('id', id);
     }
 
     // ===== MENTEE: TASKS =====
     async function renderMenteeTasks() {
-      const { data: tasks } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      const { data: answers } = await supabase.from('task_answers').select('*').eq('user_id', currentUser.id);
+      const { data: tasks } = await db.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data: answers } = await db.from('task_answers').select('*').eq('user_id', currentUser.id);
       const el = document.getElementById('menteeTasksList');
       const no = document.getElementById('noMenteeTasks');
       if (!tasks?.length) { el.innerHTML = ''; no.style.display = ''; return; }
@@ -957,7 +957,7 @@
       const textarea = document.getElementById('taskAnswer-' + taskId);
       const answer = textarea.value.trim();
       if (!answer) { alert('Please write your answer.'); return; }
-      await supabase.from('task_answers').insert({
+      await db.from('task_answers').insert({
         task_id: taskId,
         user_id: currentUser.id,
         author: currentUser.name,
@@ -978,19 +978,19 @@
     async function saveTaskAnswer(answerId, taskId) {
       const answer = document.getElementById('task-ans-input-' + taskId).value.trim();
       if (!answer) { alert('Answer cannot be empty.'); return; }
-      await supabase.from('task_answers').update({ answer }).eq('id', answerId);
+      await db.from('task_answers').update({ answer }).eq('id', answerId);
     }
 
     async function deleteTaskAnswer(id) {
       if (!confirm('Delete your answer?')) return;
-      await supabase.from('task_answers').delete().eq('id', id);
+      await db.from('task_answers').delete().eq('id', id);
     }
 
     // ===== FEEDBACK =====
     async function submitFeedback() {
       const message = document.getElementById('menteeFeedback').value.trim();
       if (!message) return;
-      await supabase.from('feedback').insert({
+      await db.from('feedback').insert({
         user_id: currentUser.id,
         from_name: currentUser.name,
         message,
@@ -1001,7 +1001,7 @@
     }
 
     async function renderMyFeedback() {
-      const { data: fb } = await supabase.from('feedback').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      const { data: fb } = await db.from('feedback').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
       const el = document.getElementById('myFeedbackList');
       const no = document.getElementById('noMyFeedback');
       const visible = (fb || []).filter(f => !f.deleted_by_mentee);
@@ -1020,7 +1020,7 @@
     }
 
     async function renderAllFeedback() {
-      const { data: fb } = await supabase.from('feedback').select('*').order('created_at', { ascending: false });
+      const { data: fb } = await db.from('feedback').select('*').order('created_at', { ascending: false });
       const el = document.getElementById('allFeedbackList');
       const no = document.getElementById('noFeedback');
       if (!fb?.length) { el.innerHTML = ''; no.style.display = ''; return; }
@@ -1064,7 +1064,7 @@
     async function sendReply(id) {
       const text = document.getElementById('reply-' + id).value.trim();
       if (!text) return;
-      await supabase.from('feedback').update({ reply: text, status: 'replied' }).eq('id', id);
+      await db.from('feedback').update({ reply: text, status: 'replied' }).eq('id', id);
     }
 
     function editAdminReply(id) {
@@ -1082,12 +1082,12 @@
     async function saveAdminReply(id) {
       const reply = document.getElementById('admin-reply-input-' + id).value.trim();
       if (!reply) { alert('Reply cannot be empty.'); return; }
-      await supabase.from('feedback').update({ reply }).eq('id', id);
+      await db.from('feedback').update({ reply }).eq('id', id);
     }
 
     async function deleteAdminReply(id) {
       if (!confirm('Delete this reply?')) return;
-      await supabase.from('feedback').update({ reply: null, status: 'pending' }).eq('id', id);
+      await db.from('feedback').update({ reply: null, status: 'pending' }).eq('id', id);
     }
 
     // ===== SESSIONS =====
@@ -1097,15 +1097,15 @@
       const date = document.getElementById('sessionDate').value;
       const status = document.getElementById('sessionStatus').value;
       if (!user_id || !title || !date) { alert('Fill in all fields.'); return; }
-      await supabase.from('sessions').insert({ user_id, title, date, status });
+      await db.from('sessions').insert({ user_id, title, date, status });
       document.getElementById('sessionTitle').value = '';
       document.getElementById('sessionDate').value = '';
       flash('sessionAdded');
     }
 
     async function renderSessionsList() {
-      const { data: sessions } = await supabase.from('sessions').select('*').order('created_at', { ascending: false });
-      const { data: mentees } = await supabase.from('profiles').select('*').eq('role', 'mentee');
+      const { data: sessions } = await db.from('sessions').select('*').order('created_at', { ascending: false });
+      const { data: mentees } = await db.from('profiles').select('*').eq('role', 'mentee');
       const el = document.getElementById('sessionsList');
       const no = document.getElementById('noSessions');
       if (!sessions?.length) { el.innerHTML = ''; no.style.display = ''; return; }
@@ -1133,28 +1133,28 @@
     }
 
     async function toggleSession(id) {
-      const { data: s } = await supabase.from('sessions').select('status').eq('id', id).single();
+      const { data: s } = await db.from('sessions').select('status').eq('id', id).single();
       if (s) {
-        await supabase.from('sessions').update({ status: s.status === 'done' ? 'upcoming' : 'done' }).eq('id', id);
+        await db.from('sessions').update({ status: s.status === 'done' ? 'upcoming' : 'done' }).eq('id', id);
       }
     }
 
     async function deleteSession(id) {
       if (!confirm('Delete this session?')) return;
-      await supabase.from('sessions').delete().eq('id', id);
+      await db.from('sessions').delete().eq('id', id);
     }
 
     // ===== STATS =====
     async function updateAdminStats() {
-      const { count: postCount } = await supabase.from('posts').select('*', { count: 'exact', head: true });
-      const { data: fb } = await supabase.from('feedback').select('reply, deleted_by_mentee, deleted_by_admin');
+      const { count: postCount } = await db.from('posts').select('*', { count: 'exact', head: true });
+      const { data: fb } = await db.from('feedback').select('reply, deleted_by_mentee, deleted_by_admin');
       document.getElementById('totalPosts').textContent = postCount || 0;
       document.getElementById('totalQuestions').textContent = (fb || []).filter(f => !f.reply && !f.deleted_by_mentee && !f.deleted_by_admin).length;
     }
 
     async function updateMenteeStats() {
       if (!currentUser) return;
-      const { data: sessions } = await supabase.from('sessions').select('status').eq('user_id', currentUser.id);
+      const { data: sessions } = await db.from('sessions').select('status').eq('user_id', currentUser.id);
       const done = (sessions || []).filter(s => s.status === 'done').length;
       const upcoming = (sessions || []).filter(s => s.status === 'upcoming').length;
       const total = (sessions || []).length;
@@ -1168,7 +1168,7 @@
     async function updateAdminProfile() {
       const name = document.getElementById('adminName').value.trim();
       if (!name) { alert('Name is required.'); return; }
-      await supabase.from('profiles').update({ name }).eq('user_id', currentUser.id);
+      await db.from('profiles').update({ name }).eq('user_id', currentUser.id);
       currentUser.name = name;
       sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
       flash('profileUpdated');
@@ -1179,7 +1179,7 @@
       const cf = document.getElementById('confirmPass').value;
       if (n.length < 6) { alert('Password must be at least 6 characters.'); return; }
       if (n !== cf) { alert('Passwords do not match.'); return; }
-      const { error } = await supabase.auth.updateUser({ password: n });
+      const { error } = await db.auth.updateUser({ password: n });
       if (error) { alert(error.message); return; }
       document.getElementById('newPass').value = '';
       document.getElementById('confirmPass').value = '';
@@ -1231,7 +1231,7 @@
     // ===== INIT =====
     (async function init() {
       console.log('Init started, supabase client:', typeof supabase);
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session }, error } = await db.auth.getSession();
       console.log('Session:', session, 'Error:', error);
       if (session?.user) {
         console.log('Found existing session, loading profile...');
