@@ -343,7 +343,7 @@
     }
 
     /* ===== REACTIONS (Facebook-style) ===== */
-    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; position: relative; justify-content: space-between; }
+    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; }
     .reaction-btn {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
       border-radius: 20px; border: 1px solid var(--gray-200); background: var(--bg);
@@ -376,7 +376,7 @@
       display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
       border-radius: 50%; border: 1px solid var(--gray-200); background: var(--bg);
       cursor: pointer; font-size: 1.1rem; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-      position: absolute; right: 0; flex-shrink: 0;
+      margin-left: auto; flex-shrink: 0;
     }
     .reaction-trigger:hover { background: rgba(212,168,67,0.08); border-color: var(--gold); transform: scale(1.1); }
     .reaction-trigger:active { transform: scale(0.9); }
