@@ -1235,17 +1235,23 @@
     }
 
     // ===== INIT =====
-    (async function init() {
-      console.log('Init started, db client:', typeof db);
-      const { data: { session }, error } = await db.auth.getSession();
-      console.log('Session:', session, 'Error:', error);
-      if (session?.user) {
-        console.log('Found existing session, loading profile...');
+    console.log('Init started, db client:', typeof db);
+    db.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, 'Session:', session);
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('Signed in, loading profile...');
         await loadUserProfile(session.user);
-      } else {
-        console.log('No existing session, showing login.');
       }
-    })();
+    });
+
+    const { data: { session }, error } = await db.auth.getSession();
+    console.log('Session:', session, 'Error:', error);
+    if (session?.user) {
+      console.log('Found existing session, loading profile...');
+      await loadUserProfile(session.user);
+    } else {
+      console.log('No existing session, showing login.');
+    }
   </script>
 </body>
 </html>
