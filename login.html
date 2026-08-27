@@ -384,41 +384,59 @@
     .reaction-picker-fb {
       display: none; position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%);
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 40px;
-      padding: 8px 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.2); z-index: 10;
+      padding: 8px 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 10;
     }
     .reaction-picker-fb.show {
-      display: flex; gap: 4px;
-      animation: fbPickerSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      display: flex; gap: 2px;
+      animation: fbPickerOpen 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
     }
-    @keyframes fbPickerSlideUp {
-      0% { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.7); }
-      60% { opacity: 1; transform: translateX(-50%) translateY(-4px) scale(1.05); }
+    @keyframes fbPickerOpen {
+      0% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.5); }
+      50% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.08); }
+      70% { transform: translateX(-50%) translateY(2px) scale(0.97); }
       100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+    .reaction-picker-fb.hiding {
+      animation: fbPickerClose 0.25s cubic-bezier(0.6,0.04,0.98,0.335) forwards;
+    }
+    @keyframes fbPickerClose {
+      0% { opacity: 1; transform: translateX(-50%) scale(1); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.5); }
     }
     .reaction-picker-fb span {
       font-size: 1.5rem; padding: 6px; border-radius: 50%; cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); line-height: 1;
-      display: flex; align-items: center; justify-content: center;
+      line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), filter 0.2s ease;
+    }
+    .reaction-picker-fb span:nth-child(1) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.02s both; }
+    .reaction-picker-fb span:nth-child(2) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.04s both; }
+    .reaction-picker-fb span:nth-child(3) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.06s both; }
+    .reaction-picker-fb span:nth-child(4) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.08s both; }
+    .reaction-picker-fb span:nth-child(5) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.10s both; }
+    .reaction-picker-fb span:nth-child(6) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.12s both; }
+    .reaction-picker-fb span:nth-child(7) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.14s both; }
+    .reaction-picker-fb span:nth-child(8) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.16s both; }
+    .reaction-picker-fb span:nth-child(9) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.18s both; }
+    .reaction-picker-fb span:nth-child(10) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.20s both; }
+    @keyframes fbEmojiIn {
+      0% { opacity: 0; transform: scale(0) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
     }
     .reaction-picker-fb span:hover {
-      transform: scale(1.4) translateY(-8px);
-      animation: fbEmojiHover 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      transform: scale(1.45) translateY(-10px);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
     }
-    @keyframes fbEmojiHover {
-      0% { transform: scale(1) translateY(0); }
-      50% { transform: scale(1.5) translateY(-12px) rotate(-5deg); }
-      100% { transform: scale(1.4) translateY(-8px) rotate(0deg); }
-    }
-    .reaction-picker-fb span:active { transform: scale(0.85) translateY(-4px); }
+    .reaction-picker-fb span:active { transform: scale(0.8) translateY(-2px); }
 
     .reaction-float {
-      position: fixed; pointer-events: none; font-size: 1.8rem; z-index: 9999;
-      animation: fbFloatUp 1s cubic-bezier(0.2,0.8,0.2,1) forwards;
+      position: fixed; pointer-events: none; font-size: 2rem; z-index: 9999;
+      animation: fbFloatUp 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards;
     }
     @keyframes fbFloatUp {
-      0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-      30% { opacity: 1; transform: translateY(-40px) scale(1.3) rotate(-10deg); }
-      100% { opacity: 0; transform: translateY(-120px) scale(0.6) rotate(15deg); }
+      0% { opacity: 1; transform: translateY(0) scale(0.5) rotate(0deg); }
+      15% { opacity: 1; transform: translateY(-20px) scale(1.4) rotate(-8deg); }
+      40% { opacity: 1; transform: translateY(-60px) scale(1.1) rotate(5deg); }
+      100% { opacity: 0; transform: translateY(-140px) scale(0.4) rotate(-12deg); }
     }
 
     .reaction-wrapper { position: relative; display: inline-block; }
@@ -998,7 +1016,7 @@
         html += `<button class="reaction-btn ${data.reacted ? 'reacted' : ''}" onclick="toggleReaction('${postId}', '${emoji}')"><span class="r-emoji">${emoji}</span><span class="r-count">${data.count}</span></button>`;
       });
       html += `<div class="reaction-wrapper">`;
-      html += `<button class="reaction-trigger" onmouseenter="showFbPicker('${postId}')" onclick="showFbPicker('${postId}')">➕</button>`;
+      html += `<button class="reaction-trigger" onclick="showFbPicker('${postId}')">➕</button>`;
       html += `<div class="reaction-picker-fb" id="fbpicker-${postId}">`;
       REACTION_EMOJIS.forEach((e, i) => {
         html += `<span style="animation-delay:${i * 0.03}s" onclick="pickReaction('${postId}','${e}')">${e}</span>`;
@@ -1008,19 +1026,25 @@
     }
 
     function showFbPicker(postId) {
-      document.querySelectorAll('.reaction-picker-fb.show').forEach(p => p.classList.remove('show'));
       const picker = document.getElementById('fbpicker-' + postId);
-      if (picker) picker.classList.add('show');
+      if (!picker) return;
+      const isOpen = picker.classList.contains('show');
+      document.querySelectorAll('.reaction-picker-fb.show').forEach(p => { p.classList.remove('show'); p.classList.add('hiding'); setTimeout(() => p.classList.remove('hiding'), 250); });
+      if (!isOpen) {
+        picker.classList.remove('hiding');
+        picker.classList.add('show');
+      }
     }
 
     function pickReaction(postId, emoji) {
-      document.querySelectorAll('.reaction-picker-fb.show').forEach(p => p.classList.remove('show'));
+      const picker = document.getElementById('fbpicker-' + postId);
+      if (picker) { picker.classList.add('hiding'); setTimeout(() => { picker.classList.remove('show','hiding'); }, 250); }
       toggleReaction(postId, emoji);
     }
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.reaction-wrapper')) {
-        document.querySelectorAll('.reaction-picker-fb.show').forEach(p => p.classList.remove('show'));
+        document.querySelectorAll('.reaction-picker-fb.show').forEach(p => { p.classList.add('hiding'); setTimeout(() => p.classList.remove('show','hiding'), 250); });
       }
     });
 
