@@ -457,26 +457,25 @@ img { max-width: 100%; display: block; }
 
 /* ===== BUTTONS ===== */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 32px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: var(--transition);
-  cursor: pointer;
-  border: none;
+  display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px;
+  border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1); cursor: pointer; border: none;
+  position: relative; overflow: hidden;
 }
+.btn::before {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+  background: rgba(255,255,255,0.2); border-radius: 50%;
+  transition: width 0.5s, height 0.5s, top 0.5s, left 0.5s;
+  transform: translate(-50%, -50%);
+}
+.btn:hover::before { width: 300px; height: 300px; }
+.btn:active { transform: scale(0.96); }
 
 .btn-primary {
-  background: var(--gold);
-  color: var(--navy);
+  background: var(--gold); color: var(--navy);
 }
-
 .btn-primary:hover {
-  background: var(--gold-light);
-  transform: translateY(-2px);
+  background: var(--gold-light); transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(212,168,67,0.3);
 }
 
