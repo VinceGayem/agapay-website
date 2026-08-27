@@ -1028,11 +1028,45 @@
         <div class="feedback-item">
           <div class="feedback-header">
             <span class="feedback-date">${fmtDate(f.created_at)}</span>
+            <div style="display:flex;gap:6px;">
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editMyFeedback('${f.id}')">✏️ Edit</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteMyFeedback('${f.id}')">🗑️ Delete</button>
+            </div>
           </div>
-          <div class="feedback-message">${esc(f.message)}</div>
+          <div class="feedback-message" id="fb-msg-${f.id}">${esc(f.message)}</div>
+          <div id="fb-edit-${f.id}" style="display:none;margin:10px 0;">
+            <textarea id="fb-input-${f.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--bg);color:var(--text);resize:vertical;min-height:80px;">${esc(f.message)}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveMyFeedback('${f.id}')">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditMyFeedback('${f.id}')">Cancel</button>
+            </div>
+          </div>
           ${f.reply ? '<div class="reply-content">' + esc(f.reply) + '</div>' : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">⏳ Waiting for reply...</p>'}
         </div>
       `).join('');
+    }
+
+    function editMyFeedback(id) {
+      document.getElementById('fb-msg-' + id).style.display = 'none';
+      document.getElementById('fb-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditMyFeedback(id) {
+      document.getElementById('fb-msg-' + id).style.display = '';
+      document.getElementById('fb-edit-' + id).style.display = 'none';
+    }
+
+    async function saveMyFeedback(id) {
+      const message = document.getElementById('fb-input-' + id).value.trim();
+      if (!message) { alert('Question cannot be empty.'); return; }
+      await db.from('feedback').update({ message }).eq('id', id);
+      await renderMyFeedback();
+    }
+
+    async function deleteMyFeedback(id) {
+      if (!confirm('Delete this question?')) return;
+      await db.from('feedback').update({ deleted_by_mentee: true }).eq('id', id);
+      await renderMyFeedback();
     }
 
     async function renderAllFeedback() {
