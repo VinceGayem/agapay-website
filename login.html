@@ -201,10 +201,12 @@
     .mobile-sidebar {
       position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
       background: var(--navy); z-index: 1000; padding: 70px 0 30px;
-      transition: left 0.35s cubic-bezier(0.4,0,0.2,1);
+      transition: left 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
       display: flex; flex-direction: column; overflow-y: auto;
+      opacity: 0.7;
     }
-    .mobile-sidebar.open { left: 0; }
+    .mobile-sidebar:hover { opacity: 1; }
+    .mobile-sidebar.open { left: 0; opacity: 1; }
     .mobile-sidebar .mobile-sidebar-header {
       padding: 0 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
       margin-bottom: 10px;
@@ -377,14 +379,13 @@
 <body class="login-page">
 
   <!-- Mobile menu button -->
-  <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="openSidebar()">☰</button>
+  <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="toggleSidebar()">☰</button>
 
   <!-- Mobile sidebar overlay -->
   <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
 
   <!-- Mobile sidebar -->
   <div class="mobile-sidebar" id="mobileSidebar">
-    <button class="mobile-sidebar-close" onclick="closeSidebar()">✕</button>
     <div class="mobile-sidebar-header">
       <h3>🎓 Agapay</h3>
       <p id="sidebarUserName">Mentee Dashboard</p>
@@ -771,16 +772,25 @@
 
     // ===== MOBILE SIDEBAR =====
     let currentRole = 'mentee';
+    let sidebarOpen = false;
 
-    function openSidebar() {
-      document.getElementById('mobileOverlay').classList.add('show');
-      document.getElementById('mobileSidebar').classList.add('open');
-      document.body.style.overflow = 'hidden';
+    function toggleSidebar() {
+      sidebarOpen = !sidebarOpen;
+      if (sidebarOpen) {
+        document.getElementById('mobileOverlay').classList.add('show');
+        document.getElementById('mobileSidebar').classList.add('open');
+        document.getElementById('mobileMenuBtn').textContent = '✕';
+        document.body.style.overflow = 'hidden';
+      } else {
+        closeSidebar();
+      }
     }
 
     function closeSidebar() {
+      sidebarOpen = false;
       document.getElementById('mobileOverlay').classList.remove('show');
       document.getElementById('mobileSidebar').classList.remove('open');
+      document.getElementById('mobileMenuBtn').textContent = '☰';
       document.body.style.overflow = '';
     }
 
