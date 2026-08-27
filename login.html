@@ -747,36 +747,43 @@
       if (!data.adminInvitedUsers) await db.ref('agapay/adminInvitedUsers').set({});
     }
 
-    // Setup realtime listeners
+    // Setup realtime listeners IMMEDIATELY
     function setupListeners() {
       const keys = ['mentees','admin','feedback','posts','sessions','tasks','taskAnswers','loggedUsers','adminInvites','adminInvitedUsers'];
       keys.forEach(k => {
         db.ref('agapay/' + k).on('value', snap => {
           DB[k] = snap.val() || (k === 'admin' ? DB.admin : {});
-          // Re-render active views
-          if (document.getElementById('adminDashboard').classList.contains('active')) {
-            if (k === 'mentees' || k === 'loggedUsers') renderMenteeList();
-            if (k === 'sessions') renderSessionsList();
-            if (k === 'tasks') renderAdminTasks();
-            if (k === 'posts') renderAdminPosts();
-            if (k === 'feedback') renderAllFeedback();
-            if (k === 'adminInvites') renderPendingInvites();
-            updateStats();
-          }
-          if (document.getElementById('menteeDashboard').classList.contains('active')) {
-            const u = JSON.parse(sessionStorage.getItem('agapayUser'));
-            if (u && u.role === 'mentee') {
-              if (k === 'posts') renderMenteePosts();
-              if (k === 'tasks') renderMenteeTasks();
-              if (k === 'feedback') renderMyFeedback();
-              if (k === 'sessions') updateMenteeStats(u.user);
-            }
-          }
+          renderActiveViews(k);
         });
       });
     }
 
-    initDefaults().then(setupListeners);
+    function renderActiveViews(changedKey) {
+      // Admin dashboard
+      if (document.getElementById('adminDashboard').classList.contains('active')) {
+        if (changedKey === 'mentees' || changedKey === 'loggedUsers') renderMenteeList();
+        if (changedKey === 'sessions') renderSessionsList();
+        if (changedKey === 'tasks' || changedKey === 'taskAnswers') renderAdminTasks();
+        if (changedKey === 'posts') renderAdminPosts();
+        if (changedKey === 'feedback') renderAllFeedback();
+        if (changedKey === 'adminInvites') renderPendingInvites();
+        if (changedKey === 'posts' || changedKey === 'feedback') updateStats();
+      }
+      // Mentee dashboard
+      if (document.getElementById('menteeDashboard').classList.contains('active')) {
+        const u = JSON.parse(sessionStorage.getItem('agapayUser'));
+        if (u && u.role === 'mentee') {
+          if (changedKey === 'posts') renderMenteePosts();
+          if (changedKey === 'tasks' || changedKey === 'taskAnswers') renderMenteeTasks();
+          if (changedKey === 'feedback') renderMyFeedback();
+          if (changedKey === 'sessions') updateMenteeStats(u.user);
+        }
+      }
+    }
+
+    // Start listeners FIRST, then init defaults
+    setupListeners();
+    initDefaults();
 
     // ===== EMAILJS INIT =====
     emailjs.init('ONzjMfvUFCoPoF5Ah');
