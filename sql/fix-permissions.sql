@@ -1,15 +1,25 @@
--- Run this in Supabase SQL Editor to fix table permissions
-GRANT ALL ON profiles TO anon;
-GRANT ALL ON profiles TO authenticated;
-GRANT ALL ON posts TO anon;
-GRANT ALL ON posts TO authenticated;
-GRANT ALL ON comments TO anon;
-GRANT ALL ON comments TO authenticated;
-GRANT ALL ON tasks TO anon;
-GRANT ALL ON tasks TO authenticated;
-GRANT ALL ON task_answers TO anon;
-GRANT ALL ON task_answers TO authenticated;
-GRANT ALL ON feedback TO anon;
-GRANT ALL ON feedback TO authenticated;
-GRANT ALL ON sessions TO anon;
-GRANT ALL ON sessions TO authenticated;
+-- Nuclear fix: drop and recreate everything
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/rvqyqymeidraplaereaw/sql/new
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Allow all on profiles" ON profiles;
+DROP POLICY IF EXISTS "Allow all on posts" ON posts;
+DROP POLICY IF EXISTS "Allow all on comments" ON comments;
+DROP POLICY IF EXISTS "Allow all on tasks" ON tasks;
+DROP POLICY IF EXISTS "Allow all on task_answers" ON task_answers;
+DROP POLICY IF EXISTS "Allow all on feedback" ON feedback;
+DROP POLICY IF EXISTS "Allow all on sessions" ON sessions;
+
+-- Grant permissions
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+
+-- Recreate permissive policies
+CREATE POLICY "Allow all on profiles" ON profiles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on posts" ON posts FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on comments" ON comments FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on tasks" ON tasks FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on task_answers" ON task_answers FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on feedback" ON feedback FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on sessions" ON sessions FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);

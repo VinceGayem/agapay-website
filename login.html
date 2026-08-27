@@ -641,18 +641,23 @@
 
     // ===== RENDER ALL =====
     async function renderAll() {
-      if (currentUser?.role === 'admin') {
-        await renderMenteeList();
-        await renderSessionsList();
-        await renderAdminTasks();
-        await renderAdminPosts();
-        await renderAllFeedback();
-        updateAdminStats();
-      } else {
-        await renderMenteePosts();
-        await renderMenteeTasks();
-        await renderMyFeedback();
-        updateMenteeStats();
+      if (!currentUser) return;
+      try {
+        if (currentUser.role === 'admin') {
+          await renderMenteeList().catch(e => console.error('renderMenteeList:', e));
+          await renderSessionsList().catch(e => console.error('renderSessionsList:', e));
+          await renderAdminTasks().catch(e => console.error('renderAdminTasks:', e));
+          await renderAdminPosts().catch(e => console.error('renderAdminPosts:', e));
+          await renderAllFeedback().catch(e => console.error('renderAllFeedback:', e));
+          await updateAdminStats().catch(e => console.error('updateAdminStats:', e));
+        } else {
+          await renderMenteePosts().catch(e => console.error('renderMenteePosts:', e));
+          await renderMenteeTasks().catch(e => console.error('renderMenteeTasks:', e));
+          await renderMyFeedback().catch(e => console.error('renderMyFeedback:', e));
+          await updateMenteeStats().catch(e => console.error('updateMenteeStats:', e));
+        }
+      } catch (e) {
+        console.error('renderAll error:', e);
       }
     }
 
@@ -688,7 +693,7 @@
       if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
       no.style.display = 'none';
 
-      el.innerHTML = await Promise.all(posts.map(async p => {
+      el.innerHTML = (await Promise.all(posts.map(async p => {
         const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
         return `
@@ -729,7 +734,7 @@
             </div>
           </div>
         </div>`;
-      })).join('');
+      }))).join('');
     }
 
     async function createPost() {
@@ -799,7 +804,7 @@
       if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
       no.style.display = 'none';
 
-      el.innerHTML = await Promise.all(posts.map(async p => {
+      el.innerHTML = (await Promise.all(posts.map(async p => {
         const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
         return `
@@ -823,7 +828,7 @@
             </div>
           </div>
         </div>`;
-      })).join('');
+      }))).join('');
     }
 
     // ===== ADMIN: TASKS =====
