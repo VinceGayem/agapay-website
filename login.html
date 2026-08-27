@@ -14,14 +14,80 @@
   <style>
     /* ===== LOGIN PAGE ===== */
     body.login-page {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-      flex-direction: column;
-      gap: 30px;
-      padding: 20px;
+      flex-direction: column; gap: 30px; padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    body.login-page::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 600px 600px at 20% 30%, rgba(212,168,67,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 500px at 80% 70%, rgba(99,102,241,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 60% 20%, rgba(34,197,94,0.04) 0%, transparent 70%);
+      animation: bgPulse 8s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+    @keyframes bgPulse {
+      0% { opacity: 0.6; transform: scale(1) rotate(0deg); }
+      100% { opacity: 1; transform: scale(1.1) rotate(3deg); }
+    }
+    .bg-orbs { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-orb {
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.12;
+    }
+    .bg-orb:nth-child(1) {
+      width: 300px; height: 300px; background: #d4a843; top: 10%; left: -5%;
+      animation: orbFloat1 12s ease-in-out infinite alternate;
+    }
+    .bg-orb:nth-child(2) {
+      width: 250px; height: 250px; background: #6366f1; bottom: 10%; right: -5%;
+      animation: orbFloat2 15s ease-in-out infinite alternate;
+    }
+    .bg-orb:nth-child(3) {
+      width: 200px; height: 200px; background: #22c55e; top: 50%; left: 40%;
+      animation: orbFloat3 10s ease-in-out infinite alternate;
+    }
+    .bg-orb:nth-child(4) {
+      width: 350px; height: 350px; background: #d4a843; bottom: -10%; left: 20%;
+      animation: orbFloat4 18s ease-in-out infinite alternate;
+    }
+    @keyframes orbFloat1 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(80px, 60px) scale(1.2); }
+    }
+    @keyframes orbFloat2 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-70px, -50px) scale(1.15); }
+    }
+    @keyframes orbFloat3 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, -40px) scale(0.9); }
+    }
+    @keyframes orbFloat4 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-60px, 30px) scale(1.1); }
+    }
+    .bg-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+    .bg-particle {
+      position: absolute; width: 3px; height: 3px; background: rgba(212,168,67,0.4);
+      border-radius: 50%; animation: particleRise linear infinite;
+    }
+    .bg-particle:nth-child(1) { left: 10%; animation-duration: 8s; animation-delay: 0s; width: 2px; height: 2px; }
+    .bg-particle:nth-child(2) { left: 25%; animation-duration: 12s; animation-delay: 1s; }
+    .bg-particle:nth-child(3) { left: 40%; animation-duration: 9s; animation-delay: 3s; width: 4px; height: 4px; opacity: 0.3; }
+    .bg-particle:nth-child(4) { left: 55%; animation-duration: 11s; animation-delay: 2s; }
+    .bg-particle:nth-child(5) { left: 70%; animation-duration: 7s; animation-delay: 4s; width: 2px; height: 2px; }
+    .bg-particle:nth-child(6) { left: 85%; animation-duration: 13s; animation-delay: 0.5s; }
+    .bg-particle:nth-child(7) { left: 15%; animation-duration: 10s; animation-delay: 5s; background: rgba(99,102,241,0.3); }
+    .bg-particle:nth-child(8) { left: 60%; animation-duration: 14s; animation-delay: 3.5s; background: rgba(99,102,241,0.3); width: 2px; height: 2px; }
+    .bg-particle:nth-child(9) { left: 35%; animation-duration: 9s; animation-delay: 6s; background: rgba(34,197,94,0.3); }
+    .bg-particle:nth-child(10) { left: 78%; animation-duration: 11s; animation-delay: 1.5s; background: rgba(34,197,94,0.3); width: 4px; height: 4px; opacity: 0.25; }
+    @keyframes particleRise {
+      0% { bottom: -5%; opacity: 0; transform: translateX(0); }
+      10% { opacity: 0.5; }
+      90% { opacity: 0.3; }
+      100% { bottom: 105%; opacity: 0; transform: translateX(30px); }
     }
     .login-wrapper { width: 100%; max-width: 480px; }
     .login-role-switch {
@@ -525,6 +591,20 @@
   </style>
 </head>
 <body class="login-page">
+
+  <!-- Live background -->
+  <div class="bg-orbs">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+  <div class="bg-particles">
+    <div class="bg-particle"></div><div class="bg-particle"></div><div class="bg-particle"></div>
+    <div class="bg-particle"></div><div class="bg-particle"></div><div class="bg-particle"></div>
+    <div class="bg-particle"></div><div class="bg-particle"></div><div class="bg-particle"></div>
+    <div class="bg-particle"></div>
+  </div>
 
   <!-- Mobile menu button -->
   <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="toggleSidebar()">☰</button>
