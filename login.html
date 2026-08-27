@@ -14,187 +14,113 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
-    body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    }
-
+    body { min-height: 100vh; background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); }
     .login-container { width: 100%; max-width: 440px; padding: 20px; min-height: 520px; }
-
-    .login-card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 50px 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
-      border: 1px solid var(--gray-200);
-    }
-
+    .login-card { background: var(--card-bg); border-radius: 20px; padding: 50px 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; border: 1px solid var(--gray-200); }
     .login-logo { font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
     .login-logo span { color: var(--gold); }
     .login-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 35px; }
-
-    .login-icon {
-      width: 70px; height: 70px;
-      background: rgba(212,168,67,0.1);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; margin: 0 auto 25px;
-    }
-
+    .login-icon { width: 70px; height: 70px; background: rgba(212,168,67,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px; }
     .login-form .form-group { text-align: left; margin-bottom: 20px; }
     .login-form .form-group label { font-size: 0.85rem; margin-bottom: 6px; }
     .login-form .form-group input { padding: 14px 16px; font-size: 0.95rem; }
     .login-form .btn { width: 100%; justify-content: center; padding: 15px; font-size: 1rem; margin-top: 5px; }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      margin: 25px 0;
-      gap: 15px;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--gray-200);
-    }
-    .divider span {
-      font-size: 0.85rem;
-      color: var(--text-light);
-      font-weight: 500;
-    }
-
-    .google-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 13px 20px;
-      border: 2px solid var(--gray-200);
-      border-radius: 10px;
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      font-family: inherit;
-    }
-    .google-btn:hover {
-      border-color: #4285f4;
-      background: rgba(66, 133, 244, 0.05);
-    }
-    .google-btn svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .login-error {
-      background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px;
-      font-size: 0.85rem; margin-bottom: 20px; display: none; text-align: left;
-    }
+    .divider { display: flex; align-items: center; margin: 25px 0; gap: 15px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+    .divider span { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
+    .login-error { background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; display: none; text-align: left; }
     [data-theme="dark"] .login-error { background: rgba(220,38,38,0.15); color: #f87171; }
-
     .login-footer { margin-top: 25px; font-size: 0.85rem; color: var(--text-light); }
     .login-footer a { color: var(--gold); font-weight: 600; }
-
-    .login-back {
-      display: inline-flex; align-items: center; gap: 6px;
-      color: rgba(255,255,255,0.7); margin-top: 10px; font-size: 0.9rem; transition: var(--transition);
-    }
-    .login-back:hover { color: var(--gold); }
-
     .role-switch { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
-
-    .role-btn {
-      padding: 10px 24px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.15);
-      background: transparent; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 0.9rem;
-      cursor: pointer; transition: var(--transition); font-family: inherit;
-    }
+    .role-btn { padding: 10px 24px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); font-family: inherit; }
     .role-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.1); }
     .role-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-    /* Dashboard */
     .dashboard { display: none; width: 100%; max-width: 1000px; padding: 20px; margin: 80px auto 0; }
     .dashboard.active { display: block; }
     .login-wrapper.hidden { display: none; }
-    .login-wrapper {
-      margin-top: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-
+    .login-wrapper { margin-top: 40px; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
     .dash-header h1 { color: #ffffff; font-size: 1.8rem; }
     .dash-header h1 span { color: var(--gold); }
     .dash-welcome { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
-
-    .dash-card {
-      background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 20px;
-      box-shadow: var(--shadow); border: 1px solid var(--gray-200); color: var(--text);
-    }
+    .dash-card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--gray-200); color: var(--text); }
     .dash-card h3 { font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
     .dash-card p { color: var(--text-light); font-size: 0.95rem; line-height: 1.8; }
-
     .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
     .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
     .dash-stat { background: rgba(212,168,67,0.08); border-radius: 12px; padding: 20px; text-align: center; }
     .dash-stat h4 { font-size: 1.8rem; color: var(--gold); font-weight: 700; }
     .dash-stat p { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
-
-    .dash-logout {
-      background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #ffffff;
-      padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
-      transition: var(--transition); font-family: inherit;
-    }
+    .dash-logout { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit; }
     .dash-logout:hover { border-color: #dc2626; color: #dc2626; }
-
-    /* Tabs */
     .admin-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
-    .admin-tab {
-      padding: 10px 20px; border-radius: 8px; border: none; background: rgba(212,168,67,0.08);
-      color: var(--text-light); font-weight: 600; font-size: 0.9rem; cursor: pointer;
-      transition: var(--transition); font-family: inherit;
-    }
+    .admin-tab { padding: 10px 20px; border-radius: 8px; border: none; background: rgba(212,168,67,0.08); color: var(--text-light); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); font-family: inherit; }
     .admin-tab.active { background: var(--gold); color: var(--navy); }
     .admin-tab:hover:not(.active) { background: rgba(212,168,67,0.15); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* Mobile Menu Toggle */
     .admin-tabs-wrapper { position: relative; }
-    .mobile-menu-toggle {
-      display: none; background: rgba(212,168,67,0.1); border: 2px solid rgba(212,168,67,0.3);
-      border-radius: 10px; padding: 12px 16px; cursor: pointer; width: 100%;
-      margin-bottom: 15px; font-family: inherit;
-    }
-    .mobile-menu-toggle span {
-      display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; font-size: 0.95rem;
-    }
-    .mobile-menu-toggle .hamburger {
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .mobile-menu-toggle .hamburger span {
-      width: 22px; height: 2px; background: var(--gold); border-radius: 2px; transition: var(--transition);
-    }
+    .mobile-menu-toggle { display: none; background: rgba(212,168,67,0.1); border: 2px solid rgba(212,168,67,0.3); border-radius: 10px; padding: 12px 16px; cursor: pointer; width: 100%; margin-bottom: 15px; font-family: inherit; }
+    .mobile-menu-toggle span { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; font-size: 0.95rem; }
+    .mobile-menu-toggle .hamburger { display: flex; flex-direction: column; gap: 4px; }
+    .mobile-menu-toggle .hamburger span { width: 22px; height: 2px; background: var(--gold); border-radius: 2px; transition: var(--transition); }
     .mobile-menu-toggle.active .hamburger span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
     .mobile-menu-toggle.active .hamburger span:nth-child(2) { opacity: 0; }
     .mobile-menu-toggle.active .hamburger span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
-
-    /* Smooth transitions for tabs */
-    .tab-content {
-      animation: none;
-      opacity: 1;
-      transition: opacity 0.2s ease;
-    }
-
+    .mentee-list { display: flex; flex-direction: column; gap: 12px; }
+    .mentee-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-alt); padding: 18px 22px; border-radius: 12px; border: 1px solid var(--gray-200); transition: var(--transition); }
+    .mentee-item:hover { border-color: var(--gold); }
+    .mentee-info { display: flex; align-items: center; gap: 15px; }
+    .mentee-avatar { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--navy-light)); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--gold); font-weight: 700; }
+    .mentee-name { font-weight: 600; font-size: 0.95rem; }
+    .mentee-email { font-size: 0.8rem; color: var(--text-light); }
+    .mentee-status { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-active { background: rgba(34,197,94,0.1); color: #22c55e; }
+    .post-item { background: var(--bg-alt); border-radius: 14px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--gray-200); transition: var(--transition); }
+    .post-item:hover { border-color: rgba(212,168,67,0.3); }
+    .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .post-date { font-size: 0.8rem; color: var(--text-light); }
+    .post-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+    .post-body { color: var(--text-light); line-height: 1.8; margin-bottom: 18px; font-size: 0.95rem; }
+    .post-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin-bottom: 15px; }
+    .tag-announcement { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .tag-update { background: rgba(34,197,94,0.1); color: #22c55e; }
+    .tag-important { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .comments-section { border-top: 1px solid var(--gray-200); padding-top: 15px; }
+    .comments-header { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; }
+    .comment-item { display: flex; gap: 12px; margin-bottom: 12px; padding: 12px 15px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--gray-200); }
+    .comment-content { flex: 1; }
+    .comment-author { font-weight: 600; font-size: 0.85rem; }
+    .comment-text { font-size: 0.9rem; color: var(--text-light); margin-top: 3px; line-height: 1.6; }
+    .comment-time { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+    .comment-form { display: flex; gap: 10px; margin-top: 12px; }
+    .comment-form input { flex: 1; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text); transition: var(--transition); }
+    .comment-form input:focus { outline: none; border-color: var(--gold); }
+    .comment-form .btn { padding: 10px 20px; font-size: 0.85rem; margin: 0; }
+    .feedback-list { display: flex; flex-direction: column; gap: 15px; }
+    .feedback-item { background: var(--bg-alt); border-radius: 12px; padding: 22px; border: 1px solid var(--gray-200); }
+    .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .feedback-from { font-weight: 600; }
+    .feedback-date { font-size: 0.8rem; color: var(--text-light); }
+    .feedback-message { color: var(--text-light); font-size: 0.95rem; line-height: 1.7; margin-bottom: 15px; padding: 12px 15px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--gray-200); }
+    .feedback-reply textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text); resize: vertical; min-height: 80px; transition: var(--transition); }
+    .feedback-reply textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+    .feedback-reply .btn { margin-top: 10px; padding: 10px 24px; font-size: 0.85rem; }
+    .reply-saved { background: rgba(34,197,94,0.1); color: #22c55e; padding: 8px 14px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; font-weight: 600; }
+    .reply-content { margin-top: 10px; padding: 12px 15px; background: rgba(212,168,67,0.05); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); line-height: 1.7; }
+    .reply-content strong { color: var(--gold); }
+    .settings-form .form-group { margin-bottom: 20px; }
+    .settings-form label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+    .settings-form input { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition); }
+    .settings-form input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+    .settings-section { margin-bottom: 30px; }
+    .settings-section h4 { font-size: 1rem; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
+    .form-group textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); resize: vertical; min-height: 100px; transition: var(--transition); }
+    .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
+    .form-group select { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition); }
+    .form-group select:focus { outline: none; border-color: var(--gold); }
     html { scroll-behavior: smooth; }
-
     @media (max-width: 768px) {
       .mobile-menu-toggle { display: block; }
       .admin-tabs-wrapper .admin-tabs { display: none; flex-direction: column; position: absolute; z-index: 100; left: 0; right: 0; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--gray-200); }
@@ -211,179 +137,23 @@
       .dash-stat p { font-size: 0.7rem; margin: 2px 0 0; }
       .dash-grid { grid-template-columns: 1fr; gap: 12px; }
       .dash-card { padding: 18px; margin-bottom: 12px; border-radius: 12px; }
-      .dash-card h3 { font-size: 0.95rem; margin-bottom: 8px; }
-      .dash-card p { font-size: 0.85rem; line-height: 1.6; }
       .dashboard { padding: 12px; margin: 60px auto 0; max-width: 100%; }
       .login-container { padding: 15px; }
-      .login-card { padding: 25px 18px; border-radius: 16px; }
+      .login-card { padding: 35px 25px; border-radius: 16px; }
       .post-item { padding: 15px; border-radius: 12px; margin-bottom: 12px; }
-      .post-header { margin-bottom: 10px; }
-      .post-title { font-size: 1rem; margin-bottom: 8px; }
-      .post-body { font-size: 0.85rem; line-height: 1.6; margin-bottom: 12px; }
-      .comment-item { padding: 10px; }
-      .comment-text { font-size: 0.85rem; }
-      .feedback-item { padding: 15px; }
+      .mentee-item { padding: 12px 15px; }
       .settings-form { display: flex; flex-direction: column; gap: 15px; }
       .settings-section { padding: 15px; }
-      .form-group input, .form-group select { padding: 12px; font-size: 0.9rem; }
-      .btn { padding: 12px; font-size: 0.9rem; }
-      .mentee-item { padding: 12px 15px; }
       body { min-height: 100vh; overflow-x: hidden; }
+      .comment-form { flex-direction: column; }
     }
-
     @media (min-width: 769px) and (max-width: 1024px) {
       .dashboard { max-width: 800px; }
-    }
-
-    /* Mentee List */
-    .mentee-list { display: flex; flex-direction: column; gap: 12px; }
-    .mentee-item {
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg-alt); padding: 18px 22px; border-radius: 12px;
-      border: 1px solid var(--gray-200); transition: var(--transition);
-    }
-    .mentee-item:hover { border-color: var(--gold); }
-    .mentee-info { display: flex; align-items: center; gap: 15px; }
-    .mentee-avatar {
-      width: 45px; height: 45px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--navy), var(--navy-light));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; color: var(--gold); font-weight: 700;
-    }
-    .mentee-name { font-weight: 600; font-size: 0.95rem; }
-    .mentee-email { font-size: 0.8rem; color: var(--text-light); }
-    .mentee-status { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-    .status-active { background: rgba(34,197,94,0.1); color: #22c55e; }
-
-    /* Posts */
-    .post-item {
-      background: var(--bg-alt); border-radius: 14px; padding: 25px; margin-bottom: 20px;
-      border: 1px solid var(--gray-200); transition: var(--transition);
-    }
-    .post-item:hover { border-color: rgba(212,168,67,0.3); }
-
-    .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .post-author { font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    .post-author-avatar {
-      width: 36px; height: 36px; border-radius: 50%; background: var(--gold);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; color: var(--navy); font-weight: 700;
-    }
-    .post-date { font-size: 0.8rem; color: var(--text-light); }
-    .post-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
-    .post-body { color: var(--text-light); line-height: 1.8; margin-bottom: 18px; font-size: 0.95rem; }
-
-    .post-tag {
-      display: inline-block; padding: 4px 12px; border-radius: 20px;
-      font-size: 0.7rem; font-weight: 600; margin-bottom: 15px;
-    }
-    .tag-announcement { background: rgba(59,130,246,0.1); color: #3b82f6; }
-    .tag-update { background: rgba(34,197,94,0.1); color: #22c55e; }
-    .tag-important { background: rgba(239,68,68,0.1); color: #ef4444; }
-
-    /* Comments */
-    .comments-section { border-top: 1px solid var(--gray-200); padding-top: 15px; }
-    .comments-header { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-
-    .comment-item {
-      display: flex; gap: 12px; margin-bottom: 12px; padding: 12px 15px;
-      background: var(--card-bg); border-radius: 10px; border: 1px solid var(--gray-200);
-    }
-    .comment-avatar {
-      width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 700;
-    }
-    .comment-avatar.admin-avatar { background: var(--gold); color: var(--navy); }
-    .comment-avatar.mentee-avatar { background: var(--navy); color: #fff; }
-
-    [data-theme="dark"] .comment-avatar.mentee-avatar { background: #2a2a3e; }
-
-    .comment-content { flex: 1; }
-    .comment-author { font-weight: 600; font-size: 0.85rem; }
-    .comment-text { font-size: 0.9rem; color: var(--text-light); margin-top: 3px; line-height: 1.6; }
-    .comment-time { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
-
-    .comment-form { display: flex; gap: 10px; margin-top: 12px; }
-    .comment-form input {
-      flex: 1; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px;
-      font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text);
-      transition: var(--transition);
-    }
-    .comment-form input:focus { outline: none; border-color: var(--gold); }
-    .comment-form .btn { padding: 10px 20px; font-size: 0.85rem; margin: 0; }
-
-    /* Feedback */
-    .feedback-list { display: flex; flex-direction: column; gap: 15px; }
-    .feedback-item {
-      background: var(--bg-alt); border-radius: 12px; padding: 22px;
-      border: 1px solid var(--gray-200);
-    }
-    .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .feedback-from { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .feedback-date { font-size: 0.8rem; color: var(--text-light); }
-    .feedback-message {
-      color: var(--text-light); font-size: 0.95rem; line-height: 1.7; margin-bottom: 15px;
-      padding: 12px 15px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--gray-200);
-    }
-
-    .feedback-reply textarea {
-      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
-      font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text);
-      resize: vertical; min-height: 80px; transition: var(--transition);
-    }
-    .feedback-reply textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-    .feedback-reply .btn { margin-top: 10px; padding: 10px 24px; font-size: 0.85rem; }
-
-    .reply-saved {
-      background: rgba(34,197,94,0.1); color: #22c55e; padding: 8px 14px; border-radius: 6px;
-      font-size: 0.8rem; margin-top: 8px; display: none; font-weight: 600;
-    }
-    .reply-content {
-      margin-top: 10px; padding: 12px 15px; background: rgba(212,168,67,0.05);
-      border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0;
-      font-size: 0.9rem; color: var(--text); line-height: 1.7;
-    }
-    .reply-content strong { color: var(--gold); }
-
-    /* Settings */
-    .settings-form .form-group { margin-bottom: 20px; }
-    .settings-form label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
-    .settings-form input {
-      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
-      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition);
-    }
-    .settings-form input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-    .settings-section { margin-bottom: 30px; }
-    .settings-section h4 { font-size: 1rem; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
-
-    .form-group textarea {
-      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
-      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
-      resize: vertical; min-height: 100px; transition: var(--transition);
-    }
-    .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-
-    .form-group select {
-      width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px;
-      font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition);
-    }
-    .form-group select:focus { outline: none; border-color: var(--gold); }
-
-    @media (max-width: 768px) {
-      .login-card { padding: 35px 25px; }
-      .dash-grid { grid-template-columns: 1fr; }
-      .dash-stats { grid-template-columns: repeat(3, 1fr); }
-      .dash-header { flex-direction: column; gap: 15px; text-align: center; }
-      .mentee-item { flex-direction: column; gap: 10px; text-align: center; }
-      .feedback-header { flex-direction: column; gap: 5px; }
-      .comment-form { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="container">
       <a href="index.html" class="nav-logo"><span>A</span>gapay</a>
@@ -398,13 +168,11 @@
         <a href="login.html" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.85rem; border-radius: 8px;">Login</a>
         <button class="theme-toggle" id="themeToggle"></button>
       </div>
-      <button class="hamburger">
-        <span></span><span></span><span></span>
-      </button>
+      <button class="hamburger"><span></span><span></span><span></span></button>
     </div>
   </nav>
 
-  <!-- ===== LOGIN ===== -->
+  <!-- LOGIN -->
   <div class="login-wrapper" id="loginWrapper">
     <div class="role-switch">
       <button class="role-btn active" id="btnMentee" onclick="switchRole('mentee')">Mentee</button>
@@ -413,7 +181,7 @@
 
     <div class="login-container" id="menteeLogin">
       <div class="login-card fade-up">
-        <div class="login-icon">🎓</div>
+        <div class="login-icon">&#127891;</div>
         <div class="login-logo"><span>A</span>gapay</div>
         <p class="login-subtitle">Mentee Login Portal</p>
         <div class="login-error" id="menteeError">Incorrect username or password.</div>
@@ -437,7 +205,7 @@
 
     <div class="login-container" id="adminLogin" style="display:none;">
       <div class="login-card fade-up">
-        <div class="login-icon">🛡️</div>
+        <div class="login-icon">&#128737;</div>
         <div class="login-logo"><span>A</span>gapay</div>
         <p class="login-subtitle">Admin Portal</p>
         <div class="login-error" id="adminError">Invalid admin credentials.</div>
@@ -459,7 +227,7 @@
     </div>
   </div>
 
-  <!-- ===== MENTEE DASHBOARD ===== -->
+  <!-- MENTEE DASHBOARD -->
   <div class="dashboard" id="menteeDashboard">
     <div class="dash-header">
       <div>
@@ -468,53 +236,40 @@
       </div>
       <button class="dash-logout" onclick="logout()">Log Out</button>
     </div>
-
     <div class="dash-stats">
       <div class="dash-stat"><h4 id="statDone">0</h4><p>Sessions Done</p></div>
       <div class="dash-stat"><h4 id="statUpcoming">0</h4><p>Upcoming</p></div>
       <div class="dash-stat"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
-
     <div class="admin-tabs-wrapper" id="menteeTabsWrapper">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabsWrapper', 'menteeTabs')">
-        <span>
-          <span class="hamburger"><span></span><span></span><span></span></span>
-          Menu
-        </span>
+        <span><span class="hamburger"><span></span><span></span><span></span></span> Menu</span>
       </button>
       <div class="admin-tabs" id="menteeTabs">
-        <button class="admin-tab active" onclick="showMenteeTab('home')">🏠 Home</button>
-        <button class="admin-tab" onclick="showMenteeTab('tasks')">📝 Tasks</button>
-        <button class="admin-tab" onclick="showMenteeTab('posts')">📢 Announcements</button>
-        <button class="admin-tab" onclick="showMenteeTab('feedback')">💬 Ask a Question</button>
+        <button class="admin-tab active" onclick="showMenteeTab('home')">&#127968; Home</button>
+        <button class="admin-tab" onclick="showMenteeTab('tasks')">&#128221; Tasks</button>
+        <button class="admin-tab" onclick="showMenteeTab('posts')">&#128226; Announcements</button>
+        <button class="admin-tab" onclick="showMenteeTab('feedback')">&#128172; Ask a Question</button>
       </div>
     </div>
-
-    <!-- Home -->
     <div class="tab-content active" id="mtab-home">
       <div class="dash-grid">
-        <div class="dash-card"><h3>📋 My Tasks</h3><p>Complete your weekly reflection journal and submit it before the deadline. Review your goals for this month.</p></div>
-        <div class="dash-card"><h3>📅 Next Session</h3><p>Your next mentoring session is scheduled this week. Prepare your questions and updates on your progress.</p></div>
+        <div class="dash-card"><h3>&#128203; My Tasks</h3><p>Complete your weekly reflection journal and submit it before the deadline. Review your goals for this month.</p></div>
+        <div class="dash-card"><h3>&#128197; Next Session</h3><p>Your next mentoring session is scheduled this week. Prepare your questions and updates on your progress.</p></div>
       </div>
-      <div class="dash-card"><h3>📚 Resources</h3><p>Check the <a href="resources.html" style="color:var(--gold);font-weight:600;">Resources page</a> for study guides, time management tips, and career readiness materials.</p></div>
+      <div class="dash-card"><h3>&#128218; Resources</h3><p>Check the <a href="resources.html" style="color:var(--gold);font-weight:600;">Resources page</a> for study guides, time management tips, and career readiness materials.</p></div>
     </div>
-
-    <!-- Announcements (Mentee View) -->
     <div class="tab-content" id="mtab-posts">
       <div id="menteePostsList"></div>
       <p id="noMenteePosts" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No announcements yet.</p>
     </div>
-
-    <!-- Tasks (Mentee View) -->
     <div class="tab-content" id="mtab-tasks">
       <div id="menteeTasksList"></div>
       <p id="noMenteeTasks" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No tasks yet.</p>
     </div>
-
-    <!-- Ask a Question -->
     <div class="tab-content" id="mtab-feedback">
       <div class="dash-card">
-        <h3>💬 Ask Your Mentor</h3>
+        <h3>&#128172; Ask Your Mentor</h3>
         <p style="margin-bottom:15px;">Have a question or concern? Send it here and your mentor will respond.</p>
         <div class="feedback-reply">
           <textarea id="menteeFeedback" placeholder="Type your question or feedback here..."></textarea>
@@ -523,14 +278,14 @@
         </div>
       </div>
       <div class="dash-card">
-        <h3>📬 Your Questions</h3>
+        <h3>&#128232; Your Questions</h3>
         <div id="myFeedbackList"></div>
         <p id="noMyFeedback" style="text-align:center;color:var(--text-light);padding:20px;display:none;">You haven't asked anything yet.</p>
       </div>
     </div>
   </div>
 
-  <!-- ===== ADMIN DASHBOARD ===== -->
+  <!-- ADMIN DASHBOARD -->
   <div class="dashboard" id="adminDashboard">
     <div class="dash-header">
       <div>
@@ -539,117 +294,84 @@
       </div>
       <button class="dash-logout" onclick="logout()">Log Out</button>
     </div>
-
     <div class="dash-stats">
       <div class="dash-stat"><h4 id="totalMentees">0</h4><p>Total Mentees</p></div>
       <div class="dash-stat"><h4 id="totalPosts">0</h4><p>Posts</p></div>
       <div class="dash-stat"><h4 id="totalQuestions">0</h4><p>New Questions</p></div>
     </div>
-
     <div class="admin-tabs-wrapper" id="adminTabsWrapper">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu('adminTabsWrapper', 'adminTabs')">
-        <span>
-          <span class="hamburger"><span></span><span></span><span></span></span>
-          Menu
-        </span>
+        <span><span class="hamburger"><span></span><span></span><span></span></span> Menu</span>
       </button>
       <div class="admin-tabs" id="adminTabs">
-        <button class="admin-tab active" onclick="showTab('mentees')">👤 Mentees</button>
-        <button class="admin-tab" onclick="showTab('sessions')">📅 Sessions</button>
-        <button class="admin-tab" onclick="showTab('tasks')">📝 Tasks</button>
-        <button class="admin-tab" onclick="showTab('posts')">📢 Posts</button>
-        <button class="admin-tab" onclick="showTab('questions')">❓ Questions</button>
-        <button class="admin-tab" onclick="showTab('settings')">⚙️ Settings</button>
+        <button class="admin-tab active" onclick="showTab('mentees')">&#128100; Mentees</button>
+        <button class="admin-tab" onclick="showTab('sessions')">&#128197; Sessions</button>
+        <button class="admin-tab" onclick="showTab('tasks')">&#128221; Tasks</button>
+        <button class="admin-tab" onclick="showTab('posts')">&#128226; Posts</button>
+        <button class="admin-tab" onclick="showTab('questions')">&#10067; Questions</button>
+        <button class="admin-tab" onclick="showTab('settings')">&#9881; Settings</button>
       </div>
     </div>
-
-    <!-- Mentees -->
     <div class="tab-content active" id="tab-mentees">
-      <div class="dash-card"><h3>👤 All Mentees</h3><div class="mentee-list" id="menteeList"></div></div>
+      <div class="dash-card"><h3>&#128100; All Mentees</h3><div class="mentee-list" id="menteeList"></div></div>
     </div>
-
-    <!-- Sessions Management -->
     <div class="tab-content" id="tab-sessions">
       <div class="dash-card">
-        <h3>📅 Manage Sessions</h3>
+        <h3>&#128197; Manage Sessions</h3>
         <p style="margin-bottom:20px;">Add sessions for each mentee. Mark as done or upcoming.</p>
-        <div class="form-group">
-          <label>Select Mentee</label>
-          <select id="sessionMentee"></select>
-        </div>
+        <div class="form-group"><label>Select Mentee</label><select id="sessionMentee"></select></div>
         <div class="form-group"><label>Session Title</label><input type="text" id="sessionTitle" placeholder="e.g. Week 1 - Introduction"></div>
         <div class="form-group"><label>Date</label><input type="date" id="sessionDate"></div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="sessionStatus">
-            <option value="upcoming">Upcoming</option>
-            <option value="done">Done</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Status</label><select id="sessionStatus"><option value="upcoming">Upcoming</option><option value="done">Done</option></select></div>
         <button class="btn btn-primary" onclick="addSession()">Add Session</button>
         <div class="reply-saved" id="sessionAdded">Session added!</div>
       </div>
       <div class="dash-card">
-        <h3>📋 All Sessions</h3>
+        <h3>&#128203; All Sessions</h3>
         <div id="sessionsList"></div>
         <p id="noSessions" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No sessions yet.</p>
       </div>
     </div>
-
-    <!-- Tasks Management -->
     <div class="tab-content" id="tab-tasks">
       <div class="dash-card">
-        <h3>📝 Create Task</h3>
+        <h3>&#128221; Create Task</h3>
         <div class="form-group"><label>Task Title</label><input type="text" id="taskTitle" placeholder="e.g. Write a reflection essay"></div>
         <div class="form-group"><label>Description</label><textarea id="taskDesc" placeholder="Describe the task requirements..."></textarea></div>
-        <div class="form-group"><label>Deadline</label>
-          <div style="display:flex;gap:10px;">
-            <input type="date" id="taskDeadline" style="flex:1;">
-            <input type="time" id="taskDeadlineTime" style="flex:1;">
-          </div>
-        </div>
+        <div class="form-group"><label>Deadline</label><div style="display:flex;gap:10px;"><input type="date" id="taskDeadline" style="flex:1;"><input type="time" id="taskDeadlineTime" style="flex:1;"></div></div>
         <button class="btn btn-primary" onclick="createTask()">Assign Task</button>
         <div class="reply-saved" id="taskCreated">Task assigned to all mentees!</div>
       </div>
       <div class="dash-card">
-        <h3>📋 All Tasks</h3>
+        <h3>&#128203; All Tasks</h3>
         <div id="adminTasksList"></div>
         <p id="noAdminTasks" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No tasks yet.</p>
       </div>
     </div>
-
-    <!-- Posts -->
     <div class="tab-content" id="tab-posts">
       <div class="dash-card">
-        <h3>📝 Create Announcement</h3>
+        <h3>&#128221; Create Announcement</h3>
         <div class="form-group"><label>Title</label><input type="text" id="postTitle" placeholder="Announcement title"></div>
-        <div class="form-group"><label>Tag</label>
-          <select id="postTag">
-            <option value="announcement">📢 Announcement</option>
-            <option value="update">✅ Update</option>
-            <option value="important">❗ Important</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Tag</label><select id="postTag"><option value="announcement">&#128227; Announcement</option><option value="update">&#9989; Update</option><option value="important">&#10071; Important</option></select></div>
         <div class="form-group"><label>Message</label><textarea id="postBody" placeholder="Write your announcement..."></textarea></div>
         <button class="btn btn-primary" onclick="createPost()">Publish Post</button>
         <div class="reply-saved" id="postCreated">Post published!</div>
       </div>
-      <div class="dash-card"><h3>📢 All Posts</h3><div id="adminPostsList"></div><p id="noAdminPosts" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No posts yet.</p></div>
+      <div class="dash-card">
+        <h3>&#128226; All Posts</h3>
+        <div id="adminPostsList"></div>
+        <p id="noAdminPosts" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No posts yet.</p>
+      </div>
     </div>
-
-    <!-- Questions -->
     <div class="tab-content" id="tab-questions">
       <div class="dash-card">
-        <h3>❓ Mentee Questions</h3>
+        <h3>&#10067; Mentee Questions</h3>
         <div class="feedback-list" id="allFeedbackList"></div>
         <p id="noFeedback" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No questions yet.</p>
       </div>
     </div>
-
-    <!-- Settings -->
     <div class="tab-content" id="tab-settings">
       <div class="dash-card">
-        <h3>⚙️ Account Settings</h3>
+        <h3>&#9881; Account Settings</h3>
         <div class="settings-form">
           <div class="settings-section">
             <h4>Admin Profile</h4>
@@ -699,1182 +421,6 @@
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/main.js"></script>
-  <script>
-    // ===== FIREBASE REALTIME SYNC =====
-    // Local cache synced with Firebase in realtime
-    const DB = {
-      mentees: {}, admin: { user: 'admin', password: 'agapayadmin' },
-      feedback: {}, posts: {}, sessions: {}, tasks: {}, taskAnswers: {},
-      loggedUsers: {}, adminInvites: {}, adminInvitedUsers: {}
-    };
-
-    // Convert Firebase object to array (sorted newest first by key)
-    function objToArr(obj) {
-      if (!obj) return [];
-      return Object.entries(obj).map(([k, v]) => ({ ...v, _key: k })).reverse();
-    }
-
-    // Get data as array (for compatibility with existing code)
-    function getData(key) { return objToArr(DB[key]); }
-    function getDataObj(key) { return DB[key] || {}; }
-
-    // Set data to Firebase + local cache (handles both arrays and objects)
-    function setData(key, val) {
-      if (Array.isArray(val)) {
-        // Convert array to Firebase object using id as key
-        const obj = {};
-        val.forEach(item => { if (item && item.id) obj[item.id] = item; });
-        DB[key] = obj;
-        return db.ref('agapay/' + key).set(obj);
-      }
-      DB[key] = val;
-      return db.ref('agapay/' + key).set(val);
-    }
-
-    // Initialize Firebase defaults
-    async function initDefaults() {
-      const snap = await db.ref('agapay').once('value');
-      const data = snap.val() || {};
-      if (!data.mentees) await db.ref('agapay/mentees').set({});
-      if (!data.admin) await db.ref('agapay/admin').set(DB.admin);
-      if (!data.feedback) await db.ref('agapay/feedback').set({});
-      if (!data.posts) await db.ref('agapay/posts').set({});
-      if (!data.sessions) await db.ref('agapay/sessions').set({});
-      if (!data.tasks) await db.ref('agapay/tasks').set({});
-      if (!data.taskAnswers) await db.ref('agapay/taskAnswers').set({});
-      if (!data.loggedUsers) await db.ref('agapay/loggedUsers').set({});
-      if (!data.adminInvites) await db.ref('agapay/adminInvites').set({});
-      if (!data.adminInvitedUsers) await db.ref('agapay/adminInvitedUsers').set({});
-    }
-
-    // Setup realtime listeners IMMEDIATELY
-    function setupListeners() {
-      const keys = ['mentees','admin','feedback','posts','sessions','tasks','taskAnswers','loggedUsers','adminInvites','adminInvitedUsers'];
-      keys.forEach(k => {
-        db.ref('agapay/' + k).on('value', snap => {
-          DB[k] = snap.val() || (k === 'admin' ? DB.admin : {});
-          renderActiveViews(k);
-        });
-      });
-    }
-
-    function renderActiveViews(changedKey) {
-      // Admin dashboard
-      if (document.getElementById('adminDashboard').classList.contains('active')) {
-        if (changedKey === 'mentees' || changedKey === 'loggedUsers') renderMenteeList();
-        if (changedKey === 'sessions') renderSessionsList();
-        if (changedKey === 'tasks' || changedKey === 'taskAnswers') renderAdminTasks();
-        if (changedKey === 'posts') renderAdminPosts();
-        if (changedKey === 'feedback') renderAllFeedback();
-        if (changedKey === 'adminInvites') renderPendingInvites();
-        if (changedKey === 'posts' || changedKey === 'feedback') updateStats();
-      }
-      // Mentee dashboard
-      if (document.getElementById('menteeDashboard').classList.contains('active')) {
-        const u = JSON.parse(sessionStorage.getItem('agapayUser'));
-        if (u && u.role === 'mentee') {
-          if (changedKey === 'posts') renderMenteePosts();
-          if (changedKey === 'tasks' || changedKey === 'taskAnswers') renderMenteeTasks();
-          if (changedKey === 'feedback') renderMyFeedback();
-          if (changedKey === 'sessions') updateMenteeStats(u.user);
-        }
-      }
-    }
-
-    // Start listeners FIRST, then init defaults
-    setupListeners();
-    initDefaults();
-
-    // ===== EMAILJS INIT =====
-    emailjs.init('ONzjMfvUFCoPoF5Ah');
-
-    // ===== TRACK USERS =====
-    function trackUser(user, name, email, picture) {
-      const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-      const userData = {
-        user, name, email: email || user + '@phinmaed.com',
-        picture: picture || null, role: 'mentee',
-        registered: now, lastLogin: now
-      };
-      return db.ref('agapay/loggedUsers/' + user).set(userData);
-    }
-
-    // ===== GOOGLE LOGIN =====
-    function handleGoogleLogin(response) {
-      const payload = JSON.parse(atob(response.credential.split('.')[1]));
-      const name = payload.name;
-      const email = payload.email;
-      const picture = payload.picture;
-
-      trackUser(email.split('@')[0], name, email, picture).then(() => {
-        // Force re-render after Firebase write completes
-        setTimeout(() => renderActiveViews('loggedUsers'), 500);
-      });
-
-      sessionStorage.setItem('agapayUser', JSON.stringify({
-        role: 'mentee',
-        name: name,
-        user: email.split('@')[0],
-        email: email,
-        picture: picture
-      }));
-      showMenteeDashboard(name, picture);
-    }
-
-    // ===== ROLE SWITCH =====
-    function switchRole(r) {
-      document.getElementById('btnMentee').classList.toggle('active', r === 'mentee');
-      document.getElementById('btnAdmin').classList.toggle('active', r === 'admin');
-
-      const menteeLogin = document.getElementById('menteeLogin');
-      const adminLogin = document.getElementById('adminLogin');
-
-      if (r === 'mentee') {
-        adminLogin.style.opacity = '0';
-        adminLogin.style.transform = 'translateY(10px)';
-        setTimeout(() => {
-          adminLogin.style.display = 'none';
-          menteeLogin.style.display = 'block';
-          menteeLogin.style.opacity = '0';
-          menteeLogin.style.transform = 'translateY(10px)';
-          requestAnimationFrame(() => {
-            menteeLogin.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            menteeLogin.style.opacity = '1';
-            menteeLogin.style.transform = 'translateY(0)';
-          });
-        }, 200);
-      } else {
-        menteeLogin.style.opacity = '0';
-        menteeLogin.style.transform = 'translateY(10px)';
-        setTimeout(() => {
-          menteeLogin.style.display = 'none';
-          adminLogin.style.display = 'block';
-          adminLogin.style.opacity = '0';
-          adminLogin.style.transform = 'translateY(10px)';
-          requestAnimationFrame(() => {
-            adminLogin.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            adminLogin.style.opacity = '1';
-            adminLogin.style.transform = 'translateY(0)';
-          });
-        }, 200);
-      }
-    }
-
-    // ===== LOGIN =====
-    const loginAttempts = { mentee: 0, admin: 0, lockUntil: 0 };
-    
-    document.getElementById('menteeForm').addEventListener('submit', e => {
-      e.preventDefault();
-      if (Date.now() < loginAttempts.lockUntil) {
-        const waitSec = Math.ceil((loginAttempts.lockUntil - Date.now()) / 1000);
-        document.getElementById('menteeError').textContent = `Too many attempts. Wait ${waitSec}s.`;
-        document.getElementById('menteeError').style.display = 'block';
-        return;
-      }
-      const u = document.getElementById('menteeUser').value.trim().toLowerCase();
-      const p = document.getElementById('menteePass').value;
-      const menteesObj = getDataObj('mentees');
-      const m = Object.values(menteesObj).find(m => m.user === u && m.password === p);
-      if (m) {
-        loginAttempts.mentee = 0;
-        document.getElementById('menteeError').style.display = 'none';
-        trackUser(m.user, m.name, m.email).then(() => {
-          setTimeout(() => renderActiveViews('loggedUsers'), 500);
-        });
-        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'mentee', name: m.name, user: m.user }));
-        showMenteeDashboard(m.name);
-      } else {
-        loginAttempts.mentee++;
-        if (loginAttempts.mentee >= 5) {
-          loginAttempts.lockUntil = Date.now() + 60000;
-          document.getElementById('menteeError').textContent = 'Too many failed attempts. Locked for 60s.';
-        } else {
-          document.getElementById('menteeError').textContent = `Wrong username or password. (${5 - loginAttempts.mentee} tries left)`;
-        }
-        document.getElementById('menteeError').style.display = 'block';
-        document.getElementById('menteePass').value = '';
-      }
-    });
-
-    document.getElementById('adminForm').addEventListener('submit', e => {
-      e.preventDefault();
-      if (Date.now() < loginAttempts.lockUntil) {
-        const waitSec = Math.ceil((loginAttempts.lockUntil - Date.now()) / 1000);
-        document.getElementById('adminError').textContent = `Too many attempts. Wait ${waitSec}s.`;
-        document.getElementById('adminError').style.display = 'block';
-        return;
-      }
-      const u = document.getElementById('adminUser').value.trim().toLowerCase();
-      const p = document.getElementById('adminPass').value;
-      const a = DB.admin || { user: 'admin', password: 'agapayadmin' };
-      const invitedObj = getDataObj('adminInvitedUsers');
-      const invitedAdmin = Object.values(invitedObj).find(a => a.user === u && a.password === p);
-
-      if ((u === a.user && p === a.password) || invitedAdmin) {
-        loginAttempts.admin = 0;
-        document.getElementById('adminError').style.display = 'none';
-        const adminName = invitedAdmin ? invitedAdmin.name : 'Admin';
-        sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'admin', name: adminName }));
-        showAdminDashboard();
-      } else {
-        loginAttempts.admin++;
-        if (loginAttempts.admin >= 5) {
-          loginAttempts.lockUntil = Date.now() + 60000;
-          document.getElementById('adminError').textContent = 'Too many failed attempts. Locked for 60s.';
-        } else {
-          document.getElementById('adminError').textContent = `Wrong username or password. (${5 - loginAttempts.admin} tries left)`;
-        }
-        document.getElementById('adminError').style.display = 'block';
-        document.getElementById('adminPass').value = '';
-      }
-    });
-
-    // ===== SHOW DASHBOARDS =====
-    function showMenteeDashboard(name, picture) {
-      document.getElementById('loginWrapper').classList.add('hidden');
-      document.getElementById('menteeDashboard').classList.add('active');
-      document.getElementById('menteeName').textContent = name;
-      if (picture) {
-        const header = document.querySelector('#menteeDashboard .dash-header h1');
-        header.innerHTML = `<img src="${picture}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;">Welcome, <span id="menteeName">${name}</span>!`;
-      }
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      updateMenteeStats(user.user);
-      renderMenteePosts();
-      renderMenteeTasks();
-      renderMyFeedback();
-    }
-
-    function showAdminDashboard() {
-      document.getElementById('loginWrapper').classList.add('hidden');
-      document.getElementById('adminDashboard').classList.add('active');
-      loadAdminProfile();
-      renderMenteeList();
-      renderSessionsList();
-      renderAdminTasks();
-      renderAdminPosts();
-      renderAllFeedback();
-      updateStats();
-    }
-
-    function loadAdminProfile() {
-      const a = DB.admin || {};
-      document.getElementById('adminUsername').value = a.user || 'admin';
-      document.getElementById('adminName').value = a.name || 'Admin';
-      document.getElementById('adminEmail').value = a.email || '';
-    }
-
-    function logout() {
-      sessionStorage.removeItem('agapayUser');
-      document.getElementById('loginWrapper').classList.remove('hidden');
-      document.getElementById('menteeDashboard').classList.remove('active');
-      document.getElementById('adminDashboard').classList.remove('active');
-      document.getElementById('menteeForm').reset();
-      document.getElementById('adminForm').reset();
-    }
-
-    // ===== MOBILE MENU =====
-    function toggleMobileMenu(wrapperId, tabsId) {
-      const wrapper = document.getElementById(wrapperId);
-      const toggle = wrapper.querySelector('.mobile-menu-toggle');
-      wrapper.classList.toggle('mobile-open');
-      toggle.classList.toggle('active');
-    }
-
-    // ===== MENTEE TABS =====
-    function showMenteeTab(t) {
-      document.querySelectorAll('#menteeDashboard .admin-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('#menteeDashboard .tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector(`[onclick="showMenteeTab('${t}')"]`).classList.add('active');
-      document.getElementById('mtab-' + t).classList.add('active');
-      if (t === 'posts') renderMenteePosts();
-      if (t === 'feedback') renderMyFeedback();
-      document.getElementById('menteeTabsWrapper').classList.remove('mobile-open');
-      document.getElementById('menteeTabsWrapper').querySelector('.mobile-menu-toggle').classList.remove('active');
-    }
-
-    // ===== ADMIN TABS =====
-    function showTab(t) {
-      document.querySelectorAll('#adminDashboard .admin-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelector(`[onclick="showTab('${t}')"]`).classList.add('active');
-      document.getElementById('tab-' + t).classList.add('active');
-      if (t === 'settings') renderPendingInvites();
-      document.getElementById('adminTabsWrapper').classList.remove('mobile-open');
-      document.getElementById('adminTabsWrapper').querySelector('.mobile-menu-toggle').classList.remove('active');
-    }
-
-    // ===== ADMIN: POSTS =====
-    async function createPost() {
-      if (!Security.canSubmit('createPost', 3000)) return alert('Please wait before posting again.');
-      const title = Security.sanitizeInput(document.getElementById('postTitle').value, 200);
-      const body = Security.sanitizeInput(document.getElementById('postBody').value, 2000);
-      const tag = document.getElementById('postTag').value;
-      if (!title || !body) return alert('Please fill in all fields.');
-      const id = Date.now();
-      await db.ref('agapay/posts/' + id).set({
-        id, title, body, tag,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        comments: {}
-      });
-      document.getElementById('postTitle').value = '';
-      document.getElementById('postBody').value = '';
-      const el = document.getElementById('postCreated');
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    function renderAdminPosts() {
-      const posts = getData('posts');
-      const el = document.getElementById('adminPostsList');
-      const no = document.getElementById('noAdminPosts');
-
-      if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = posts.map(p => {
-        const comments = p.comments ? objToArr(p.comments) : [];
-        return `
-        <div class="post-item">
-          <div class="post-header">
-            <div style="display:flex;gap:8px;align-items:center;">
-              <span class="post-date">${p.date}</span>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost('${p._key}')">✏️</button>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deletePost('${p._key}')">🗑️</button>
-            </div>
-          </div>
-          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
-          <div class="post-title" id="post-title-${p._key}">${p.title}</div>
-          <div class="post-body" id="post-body-${p._key}">${p.body}</div>
-          <div id="post-edit-${p._key}" style="display:none;margin:15px 0;">
-            <input type="text" id="post-edit-title-${p._key}" value="${p.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
-            <textarea id="post-edit-body-${p._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${p.body}</textarea>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="savePost('${p._key}')">Save</button>
-              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost('${p._key}')">Cancel</button>
-            </div>
-          </div>
-          <div class="comments-section">
-            <div class="comments-header">💬 ${comments.length} Comment${comments.length !== 1 ? 's' : ''}</div>
-            ${comments.map((c, ci) => `
-              <div class="comment-item">
-                <div class="comment-content">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
-                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminComment('${p._key}', '${c._key}')">🗑️</button>
-                  </div>
-                  <div class="comment-text">${c.text}</div>
-                  <div class="comment-time">${c.time}</div>
-                </div>
-              </div>
-            `).join('')}
-            <div class="comment-form">
-              <input type="text" id="adminComment-${p._key}" placeholder="Write a comment as admin...">
-              <button class="btn btn-primary" onclick="addComment('${p._key}', 'admin')">Reply</button>
-            </div>
-          </div>
-        </div>
-      `}).join('');
-    }
-
-    function editPost(key) {
-      document.getElementById('post-title-' + key).style.display = 'none';
-      document.getElementById('post-body-' + key).style.display = 'none';
-      document.getElementById('post-edit-' + key).style.display = 'block';
-    }
-
-    function cancelEditPost(key) {
-      const p = DB.posts[key];
-      document.getElementById('post-edit-title-' + key).value = p.title;
-      document.getElementById('post-edit-body-' + key).value = p.body;
-      document.getElementById('post-title-' + key).style.display = 'block';
-      document.getElementById('post-body-' + key).style.display = 'block';
-      document.getElementById('post-edit-' + key).style.display = 'none';
-    }
-
-    function savePost(key) {
-      const newTitle = document.getElementById('post-edit-title-' + key).value.trim();
-      const newBody = document.getElementById('post-edit-body-' + key).value.trim();
-      if (!newTitle || !newBody) return alert('Title and body cannot be empty.');
-      db.ref('agapay/posts/' + key).update({ title: newTitle, body: newBody });
-    }
-
-    function deletePost(key) {
-      if (!confirm('Delete this post and all comments?')) return;
-      db.ref('agapay/posts/' + key).remove();
-    }
-
-    function deleteAdminComment(postKey, commentKey) {
-      if (!confirm('Delete this comment?')) return;
-      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).remove();
-    }
-
-    async function addComment(postKey, role) {
-      if (!Security.canSubmit('addComment-' + postKey, 2000)) return alert('Please wait before commenting again.');
-      const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postKey);
-      const text = Security.sanitizeInput(input.value, 2000);
-      if (!text) return;
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const commentKey = db.ref('agapay/posts/' + postKey + '/comments').push().key;
-      await db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).set({
-        author: Security.escapeHtml(user.name), user: user.user, role, text,
-        time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      });
-      input.value = '';
-    }
-
-    function renderMenteePosts() {
-      const posts = getData('posts');
-      const el = document.getElementById('menteePostsList');
-      const no = document.getElementById('noMenteePosts');
-      const currentUser = JSON.parse(sessionStorage.getItem('agapayUser'));
-
-      if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = posts.map(p => {
-        const comments = p.comments ? objToArr(p.comments) : [];
-        return `
-        <div class="post-item">
-          <div class="post-header">
-            <span class="post-date">${p.date}</span>
-          </div>
-          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
-          <div class="post-title">${p.title}</div>
-          <div class="post-body">${p.body}</div>
-          <div class="comments-section">
-            <div class="comments-header">💬 ${comments.length} Comment${comments.length !== 1 ? 's' : ''}</div>
-            ${comments.map((c, ci) => `
-              <div class="comment-item">
-                <div class="comment-content">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
-                    ${c.user === currentUser.user && c.role !== 'admin' ? `
-                      <div style="display:flex;gap:5px;">
-                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editComment('${p._key}', '${c._key}')">✏️</button>
-                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteComment('${p._key}', '${c._key}')">🗑️</button>
-                      </div>
-                    ` : ''}
-                  </div>
-                  <div class="comment-text" id="cmt-text-${p._key}-${c._key}">${c.text}</div>
-                  <div id="cmt-edit-${p._key}-${c._key}" style="display:none;margin-top:5px;">
-                    <input type="text" id="cmt-input-${p._key}-${c._key}" value="${c.text}" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text);">
-                    <div style="display:flex;gap:5px;margin-top:5px;">
-                      <button style="padding:4px 10px;border-radius:6px;border:none;background:var(--gold);color:var(--navy);font-size:0.75rem;font-weight:600;cursor:pointer;" onclick="saveComment('${p._key}', '${c._key}')">Save</button>
-                      <button style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:var(--card-bg);color:var(--text);font-size:0.75rem;cursor:pointer;" onclick="cancelEditComment('${p._key}', '${c._key}')">Cancel</button>
-                    </div>
-                  </div>
-                  <div class="comment-time">${c.time}</div>
-                </div>
-              </div>
-            `).join('')}
-            <div class="comment-form">
-              <input type="text" id="menteeComment-${p._key}" placeholder="Write a comment...">
-              <button class="btn btn-primary" onclick="addComment('${p._key}', 'mentee')">Comment</button>
-            </div>
-          </div>
-        </div>
-      `}).join('');
-    }
-
-    function editComment(postKey, commentKey) {
-      document.getElementById(`cmt-text-${postKey}-${commentKey}`).style.display = 'none';
-      document.getElementById(`cmt-edit-${postKey}-${commentKey}`).style.display = 'block';
-    }
-
-    function cancelEditComment(postKey, commentKey) {
-      const c = DB.posts[postKey]?.comments?.[commentKey];
-      document.getElementById(`cmt-input-${postKey}-${commentKey}`).value = c.text;
-      document.getElementById(`cmt-text-${postKey}-${commentKey}`).style.display = 'block';
-      document.getElementById(`cmt-edit-${postKey}-${commentKey}`).style.display = 'none';
-    }
-
-    function saveComment(postKey, commentKey) {
-      const newText = document.getElementById(`cmt-input-${postKey}-${commentKey}`).value.trim();
-      if (!newText) return;
-      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey + '/text').set(newText);
-    }
-
-    function deleteComment(postKey, commentKey) {
-      if (!confirm('Delete this comment?')) return;
-      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).remove();
-    }
-
-    // ===== FEEDBACK / QUESTIONS =====
-    function submitFeedback() {
-      if (!Security.canSubmit('submitFeedback', 5000)) return alert('Please wait before submitting again.');
-      const text = Security.sanitizeInput(document.getElementById('menteeFeedback').value, 2000);
-      if (!text) return;
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const id = Date.now();
-      db.ref('agapay/feedback/' + id).set({
-        id, from: Security.escapeHtml(user.name), user: user.user, message: text,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        reply: null
-      });
-      document.getElementById('menteeFeedback').value = '';
-      const el = document.getElementById('feedbackSent');
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    function renderMyFeedback() {
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const allFb = getData('feedback');
-      const fb = allFb.filter(f => f.user === user.user && !f.deletedByMentee && !f.deletedByAdmin);
-      const el = document.getElementById('myFeedbackList');
-      const no = document.getElementById('noMyFeedback');
-
-      if (!fb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = fb.map(f => `
-        <div class="feedback-item" id="fb-item-${f._key}">
-          <div class="feedback-header">
-            <div style="display:flex;gap:8px;align-items:center;">
-              <span class="feedback-date">${f.date}</span>
-              ${!f.reply ? `
-                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;" onclick="editFeedback('${f._key}')">✏️ Edit</button>
-                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteFeedback('${f._key}')">🗑️</button>
-              ` : ''}
-            </div>
-          </div>
-          <div class="feedback-message" id="fb-msg-${f._key}">${f.message}</div>
-          <div id="fb-edit-${f._key}" style="display:none;">
-            <textarea id="fb-edit-input-${f._key}" style="width:100%;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${f.message}</textarea>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="saveFeedback('${f._key}')">Save</button>
-              <button class="dash-logout" style="padding:8px 16px;font-size:0.8rem;" onclick="cancelEditFeedback('${f._key}')">Cancel</button>
-            </div>
-          </div>
-          ${f.reply ? `
-            <div class="reply-content">${f.reply}</div>
-          ` : `<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">⏳ Waiting for reply...</p>`}
-        </div>
-      `).join('');
-    }
-
-    function editFeedback(key) {
-      document.getElementById('fb-msg-' + key).style.display = 'none';
-      document.getElementById('fb-edit-' + key).style.display = 'block';
-    }
-
-    function cancelEditFeedback(key) {
-      const f = DB.feedback[key];
-      document.getElementById('fb-edit-input-' + key).value = f.message;
-      document.getElementById('fb-msg-' + key).style.display = 'block';
-      document.getElementById('fb-edit-' + key).style.display = 'none';
-    }
-
-    function saveFeedback(key) {
-      const newMsg = document.getElementById('fb-edit-input-' + key).value.trim();
-      if (!newMsg) return alert('Message cannot be empty.');
-      db.ref('agapay/feedback/' + key + '/message').set(newMsg);
-    }
-
-    function deleteFeedback(key) {
-      if (!confirm('Delete this question?')) return;
-      db.ref('agapay/feedback/' + key).update({
-        deletedByMentee: true,
-        deletedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      });
-    }
-
-    function renderAllFeedback() {
-      const allFb = getData('feedback');
-      const el = document.getElementById('allFeedbackList');
-      const no = document.getElementById('noFeedback');
-
-      if (!allFb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = allFb.map(f => `
-        <div class="feedback-item" style="${f.deletedByMentee || f.deletedByAdmin ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
-          <div class="feedback-header">
-            <span class="feedback-from">
-              ${f.from}
-              ${f.deletedByMentee ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by mentee</span>' : ''}
-              ${f.deletedByAdmin ? '<span style="color:#ef4444;font-size:0.75rem;margin-left:8px;">🗑️ Deleted by admin</span>' : ''}
-            </span>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}${f.deletedByAdmin ? ' • Removed: ' + f.deletedAt : ''}</span>
-              ${!f.deletedByAdmin && !f.deletedByMentee ? `
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="adminEditFeedback('${f._key}')">✏️</button>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="adminDeleteFeedback('${f._key}')">🗑️</button>
-              ` : ''}
-            </div>
-          </div>
-          <div class="feedback-message" id="admin-fb-msg-${f._key}">${f.message}</div>
-          <div id="admin-fb-edit-${f._key}" style="display:none;margin:10px 0;">
-            <textarea id="admin-fb-edit-input-${f._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.message}</textarea>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminFeedback('${f._key}')">Save</button>
-              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminFeedback('${f._key}')">Cancel</button>
-            </div>
-          </div>
-          ${f.reply ? `
-            <div class="reply-content" id="admin-reply-${f._key}">${f.reply}</div>
-            <div id="admin-reply-edit-${f._key}" style="display:none;margin:10px 0;">
-              <textarea id="admin-reply-edit-input-${f._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.reply}</textarea>
-              <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminReply('${f._key}')">Save</button>
-                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminReply('${f._key}')">Cancel</button>
-              </div>
-            </div>
-            <div style="display:flex;gap:6px;margin-top:6px;" id="admin-reply-actions-${f._key}">
-              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editAdminReply('${f._key}')">✏️ Edit Reply</button>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminReply('${f._key}')">🗑️ Delete Reply</button>
-            </div>
-          ` : f.deletedByMentee || f.deletedByAdmin ? `
-            <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Question was deleted.</p>
-          ` : `
-            <div class="feedback-reply">
-              <textarea id="reply-${f._key}" placeholder="Write your reply..."></textarea>
-              <button class="btn btn-primary" onclick="sendReply('${f._key}')">Send Reply</button>
-              <div class="reply-saved" id="saved-${f._key}">Reply sent!</div>
-            </div>
-          `}
-        </div>
-      `).join('');
-
-      document.getElementById('totalQuestions').textContent = allFb.filter(f => !f.reply && !f.deletedByMentee && !f.deletedByAdmin).length;
-    }
-
-    function adminEditFeedback(key) {
-      document.getElementById('admin-fb-msg-' + key).style.display = 'none';
-      document.getElementById('admin-fb-edit-' + key).style.display = 'block';
-    }
-
-    function cancelAdminFeedback(key) {
-      const f = DB.feedback[key];
-      document.getElementById('admin-fb-edit-input-' + key).value = f.message;
-      document.getElementById('admin-fb-msg-' + key).style.display = 'block';
-      document.getElementById('admin-fb-edit-' + key).style.display = 'none';
-    }
-
-    function saveAdminFeedback(key) {
-      const newMsg = document.getElementById('admin-fb-edit-input-' + key).value.trim();
-      if (!newMsg) return alert('Message cannot be empty.');
-      db.ref('agapay/feedback/' + key + '/message').set(newMsg);
-    }
-
-    function adminDeleteFeedback(key) {
-      if (!confirm('Delete this question?')) return;
-      db.ref('agapay/feedback/' + key).update({
-        deletedByAdmin: true,
-        deletedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      });
-    }
-
-    function sendReply(key) {
-      if (!Security.canSubmit('sendReply', 3000)) return alert('Please wait before sending another reply.');
-      const text = Security.sanitizeInput(document.getElementById('reply-' + key).value, 2000);
-      if (!text) return;
-      db.ref('agapay/feedback/' + key + '/reply').set(text);
-    }
-
-    function editAdminReply(key) {
-      document.getElementById('admin-reply-' + key).style.display = 'none';
-      document.getElementById('admin-reply-actions-' + key).style.display = 'none';
-      document.getElementById('admin-reply-edit-' + key).style.display = 'block';
-    }
-
-    function cancelAdminReply(key) {
-      document.getElementById('admin-reply-edit-' + key).style.display = 'none';
-      document.getElementById('admin-reply-' + key).style.display = 'block';
-      document.getElementById('admin-reply-actions-' + key).style.display = 'flex';
-    }
-
-    function saveAdminReply(key) {
-      const newReply = document.getElementById('admin-reply-edit-input-' + key).value.trim();
-      if (!newReply) return alert('Reply cannot be empty.');
-      db.ref('agapay/feedback/' + key + '/reply').set(newReply);
-    }
-
-    function deleteAdminReply(key) {
-      if (!confirm('Delete this reply?')) return;
-      db.ref('agapay/feedback/' + key + '/reply').set('');
-    }
-
-    // ===== MENTEE LIST =====
-    function renderMenteeList() {
-      const menteesObj = getDataObj('mentees');
-      const loggedUsersObj = getDataObj('loggedUsers');
-      
-      // Combine registered mentees + logged-in users (no duplicates)
-      const allMentees = {};
-      Object.values(menteesObj).forEach(m => {
-        allMentees[m.user] = { ...m, lastLogin: 'Not yet', status: 'registered' };
-      });
-      Object.values(loggedUsersObj).forEach(u => {
-        if (allMentees[u.user]) {
-          allMentees[u.user].lastLogin = u.lastLogin || 'N/A';
-          allMentees[u.user].status = 'active';
-          allMentees[u.user].picture = u.picture || allMentees[u.user].picture;
-        } else {
-          allMentees[u.user] = { ...u, status: 'active' };
-        }
-      });
-      
-      const mentees = Object.values(allMentees);
-
-      document.getElementById('menteeList').innerHTML = mentees.length ? mentees.map(u => `
-        <div class="mentee-item">
-          <div class="mentee-info">
-            <div class="mentee-avatar">${u.picture ? `<img src="${u.picture}" style="width:45px;height:45px;border-radius:50%;">` : u.name.split(' ').map(n => n[0]).join('')}</div>
-            <div>
-              <div class="mentee-name">${u.name}</div>
-              <div class="mentee-email">${u.email || u.user + '@phinmaed.com'}</div>
-              <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Last login: ${u.lastLogin}</div>
-            </div>
-          </div>
-          <span class="mentee-status ${u.status === 'active' ? 'status-active' : 'status-pending'}">${u.status === 'active' ? 'Active' : 'Registered'}</span>
-        </div>
-      `).join('') : '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees yet.</p>';
-
-      document.getElementById('totalMentees').textContent = mentees.length;
-
-      const sel = document.getElementById('sessionMentee');
-      if (sel) {
-        sel.innerHTML = mentees.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
-      }
-    }
-
-    // ===== SESSIONS =====
-    function addSession() {
-      if (!Security.canSubmit('addSession', 3000)) return alert('Please wait before adding another session.');
-      const user = document.getElementById('sessionMentee').value;
-      const title = Security.sanitizeInput(document.getElementById('sessionTitle').value, 200);
-      const date = document.getElementById('sessionDate').value;
-      const status = document.getElementById('sessionStatus').value;
-      if (!user || !title || !date) return alert('Please fill in all fields.');
-      const id = Date.now();
-      db.ref('agapay/sessions/' + id).set({
-        id, user, title, date, status,
-        dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      });
-      document.getElementById('sessionTitle').value = '';
-      document.getElementById('sessionDate').value = '';
-      const el = document.getElementById('sessionAdded');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    function renderSessionsList() {
-      const sessions = getData('sessions');
-      const el = document.getElementById('sessionsList');
-      const no = document.getElementById('noSessions');
-      const menteesObj = getDataObj('mentees');
-      const mentees = Object.values(menteesObj);
-
-      if (!sessions.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = sessions.map(s => {
-        const m = mentees.find(x => x.user === s.user);
-        return `
-          <div class="mentee-item">
-            <div class="mentee-info">
-              <div class="mentee-avatar">${s.status === 'done' ? '✅' : '📅'}</div>
-              <div>
-                <div class="mentee-name">${s.title}</div>
-                <div class="mentee-email">${m ? m.name : s.user} • ${s.date}</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <span class="mentee-status ${s.status === 'done' ? 'status-active' : 'status-pending'}">${s.status === 'done' ? 'Done' : 'Upcoming'}</span>
-              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;" onclick="toggleSession('${s._key}')">${s.status === 'done' ? 'Undo' : 'Done'}</button>
-              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteSession('${s._key}')">✕</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleSession(key) {
-      const s = DB.sessions[key];
-      if (s) {
-        db.ref('agapay/sessions/' + key + '/status').set(s.status === 'done' ? 'upcoming' : 'done');
-      }
-    }
-
-    function deleteSession(key) {
-      if (!confirm('Delete this session?')) return;
-      db.ref('agapay/sessions/' + key).remove();
-    }
-
-    function updateMenteeStats(user) {
-      const sessions = getData('sessions').filter(s => s.user === user);
-      const done = sessions.filter(s => s.status === 'done').length;
-      const upcoming = sessions.filter(s => s.status === 'upcoming').length;
-      const total = sessions.length;
-      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-      document.getElementById('statDone').textContent = done;
-      document.getElementById('statUpcoming').textContent = upcoming;
-      document.getElementById('statProgress').textContent = progress + '%';
-    }
-
-    // ===== TASKS =====
-    async function createTask() {
-      if (!Security.canSubmit('createTask', 3000)) return alert('Please wait before creating another task.');
-      const title = Security.sanitizeInput(document.getElementById('taskTitle').value, 200);
-      const desc = Security.sanitizeInput(document.getElementById('taskDesc').value, 2000);
-      const deadlineDate = document.getElementById('taskDeadline').value;
-      const deadlineTime = document.getElementById('taskDeadlineTime').value;
-      if (!title || !desc || !deadlineDate || !deadlineTime) return alert('Please fill in all fields.');
-
-      const deadline = deadlineDate + 'T' + deadlineTime;
-      const deadlineFormatted = new Date(deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-
-      const id = Date.now();
-      await db.ref('agapay/tasks/' + id).set({
-        id, title, desc, deadline, deadlineFormatted,
-        dateCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskDesc').value = '';
-      document.getElementById('taskDeadline').value = '';
-      document.getElementById('taskDeadlineTime').value = '';
-      const el = document.getElementById('taskCreated');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    function renderAdminTasks() {
-      const tasks = getData('tasks');
-      const taskAnswersObj = getDataObj('taskAnswers');
-      const answers = Object.values(taskAnswersObj);
-      const el = document.getElementById('adminTasksList');
-      const no = document.getElementById('noAdminTasks');
-      const loggedUsersObj = getDataObj('loggedUsers');
-      const loggedUsersCount = Object.keys(loggedUsersObj).length;
-
-      if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = tasks.map(t => {
-        const taskAnswers = answers.filter(a => a.taskId === t.id);
-        const submitted = taskAnswers.length;
-        return `
-          <div class="post-item">
-            <div class="post-header">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span class="post-date">Due: ${new Date(t.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask('${t._key}')">✏️</button>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask('${t._key}')">🗑️</button>
-              </div>
-            </div>
-            <div class="post-title" id="task-title-${t._key}">${t.title}</div>
-            <div class="post-body" id="task-desc-${t._key}">${t.desc}</div>
-            <div id="task-edit-${t._key}" style="display:none;margin:15px 0;">
-              <input type="text" id="task-edit-title-${t._key}" value="${t.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
-              <textarea id="task-edit-desc-${t._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${t.desc}</textarea>
-              <div style="display:flex;gap:10px;margin-top:8px;">
-                <input type="date" id="task-edit-deadline-${t._key}" value="${t.deadline.split('T')[0]}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
-                <input type="time" id="task-edit-deadline-time-${t._key}" value="${t.deadline.split('T')[1] || ''}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
-              </div>
-              <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTask('${t._key}')">Save</button>
-                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTask('${t._key}')">Cancel</button>
-              </div>
-            </div>
-            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${loggedUsersCount}</p>
-            ${taskAnswers.length ? `
-              <div style="margin-top:15px;">
-                <strong style="font-size:0.9rem;">Mentee Submissions:</strong>
-                ${taskAnswers.map(a => `
-                  <div class="comment-item" style="margin-top:8px;">
-                    <div class="comment-content">
-                      <div class="comment-author">${a.author}</div>
-                      <div class="comment-text">${a.answer}</div>
-                      <div class="comment-time">${a.time}</div>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;margin-top:10px;">No submissions yet.</p>'}
-          </div>
-        `;
-      }).join('');
-    }
-
-    function editTask(key) {
-      document.getElementById('task-title-' + key).style.display = 'none';
-      document.getElementById('task-desc-' + key).style.display = 'none';
-      document.getElementById('task-edit-' + key).style.display = 'block';
-    }
-
-    function cancelEditTask(key) {
-      const t = DB.tasks[key];
-      document.getElementById('task-edit-title-' + key).value = t.title;
-      document.getElementById('task-edit-desc-' + key).value = t.desc;
-      document.getElementById('task-edit-deadline-' + key).value = t.deadline;
-      document.getElementById('task-title-' + key).style.display = 'block';
-      document.getElementById('task-desc-' + key).style.display = 'block';
-      document.getElementById('task-edit-' + key).style.display = 'none';
-    }
-
-    function saveTask(key) {
-      const newTitle = document.getElementById('task-edit-title-' + key).value.trim();
-      const newDesc = document.getElementById('task-edit-desc-' + key).value.trim();
-      const newDeadline = document.getElementById('task-edit-deadline-' + key).value;
-      if (!newTitle || !newDesc || !newDeadline) return alert('All fields are required.');
-      const deadlineFormatted = new Date(newDeadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-      db.ref('agapay/tasks/' + key).update({ title: newTitle, desc: newDesc, deadline: newDeadline, deadlineFormatted });
-    }
-
-    async function deleteTask(key) {
-      if (!confirm('Delete this task and all submissions?')) return;
-      await db.ref('agapay/tasks/' + key).remove();
-      const answers = getData('taskAnswers');
-      const taskAnswers = answers.filter(a => a.taskId === DB.tasks[key]?.id);
-      for (const a of taskAnswers) {
-        await db.ref('agapay/taskAnswers/' + a._key).remove();
-      }
-    }
-
-    function renderMenteeTasks() {
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const tasks = getData('tasks');
-      const taskAnswersObj = getDataObj('taskAnswers');
-      const answers = Object.values(taskAnswersObj);
-      const el = document.getElementById('menteeTasksList');
-      const no = document.getElementById('noMenteeTasks');
-
-      if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
-      no.style.display = 'none';
-
-      el.innerHTML = tasks.map(t => {
-        const myAnswer = answers.find(a => a.taskId === t.id && a.user === user.user);
-        const isOverdue = new Date(t.deadline) < new Date();
-        return `
-          <div class="post-item">
-            <div class="post-header">
-              <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${new Date(t.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
-            </div>
-            <div class="post-title">${t.title}</div>
-            <div class="post-body">${t.desc}</div>
-            ${myAnswer ? `
-              <div class="reply-content" style="margin-top:15px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                  <div style="flex:1;">
-                    <strong>Your Answer:</strong>
-                    <div id="task-ans-text-${t.id}">${myAnswer.answer}</div>
-                    <div id="task-ans-edit-${t.id}" style="display:none;margin-top:8px;">
-                      <textarea id="task-ans-input-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${myAnswer.answer}</textarea>
-                      <div style="display:flex;gap:8px;margin-top:8px;">
-                        <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTaskAnswer('${t.id}', '${myAnswer._key}')">Save</button>
-                        <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTaskAnswer('${t.id}', '${myAnswer._key}')">Cancel</button>
-                      </div>
-                    </div>
-                    <div class="comment-time" style="margin-top:5px;">Submitted: ${myAnswer.time}</div>
-                  </div>
-                  <div style="display:flex;gap:5px;margin-left:10px;">
-                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--gold);" onclick="editTaskAnswer(${t.id})">✏️</button>
-                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:#ef4444;" onclick="deleteTaskAnswer('${myAnswer._key}')">🗑️</button>
-                  </div>
-                </div>
-              </div>
-            ` : `
-              <div class="feedback-reply" style="margin-top:15px;">
-                <textarea id="taskAnswer-${t.id}" placeholder="Write your answer here..."></textarea>
-                <button class="btn btn-primary" onclick="submitTaskAnswer(${t.id})">Submit Answer</button>
-              </div>
-            `}
-          </div>
-        `;
-      }).join('');
-    }
-
-    function editTaskAnswer(taskId) {
-      document.getElementById(`task-ans-text-${taskId}`).style.display = 'none';
-      document.getElementById(`task-ans-edit-${taskId}`).style.display = 'block';
-    }
-
-    function cancelEditTaskAnswer(taskId, answerKey) {
-      const a = DB.taskAnswers[answerKey];
-      document.getElementById(`task-ans-input-${taskId}`).value = a.answer;
-      document.getElementById(`task-ans-text-${taskId}`).style.display = 'block';
-      document.getElementById(`task-ans-edit-${taskId}`).style.display = 'none';
-    }
-
-    function saveTaskAnswer(taskId, answerKey) {
-      const newAnswer = document.getElementById(`task-ans-input-${taskId}`).value.trim();
-      if (!newAnswer) return alert('Answer cannot be empty.');
-      const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (edited)';
-      db.ref('agapay/taskAnswers/' + answerKey).update({ answer: newAnswer, time });
-    }
-
-    function deleteTaskAnswer(answerKey) {
-      if (!confirm('Delete your answer?')) return;
-      db.ref('agapay/taskAnswers/' + answerKey).remove();
-    }
-
-    function submitTaskAnswer(taskId) {
-      if (!Security.canSubmit('submitTaskAnswer', 5000)) return alert('Please wait before submitting again.');
-      const textarea = document.getElementById('taskAnswer-' + taskId);
-      const answer = Security.sanitizeInput(textarea.value, 5000);
-      if (!answer) return alert('Please write your answer.');
-
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const id = Date.now();
-      db.ref('agapay/taskAnswers/' + id).set({
-        id, taskId,
-        user: user.user, author: Security.escapeHtml(user.name), answer,
-        time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      });
-    }
-
-    // ===== SETTINGS =====
-    async function updateAdminProfile() {
-      if (!Security.canSubmit('updateAdminProfile', 3000)) return alert('Please wait before updating again.');
-      const newUsername = Security.sanitizeInput(document.getElementById('adminUsername').value.trim().toLowerCase(), 30);
-      const newName = Security.sanitizeInput(document.getElementById('adminName').value.trim(), 100);
-      const newEmail = Security.sanitizeInput(document.getElementById('adminEmail').value.trim(), 100);
-
-      if (!newUsername || !newName) return alert('Username and name are required.');
-      if (!Security.isValidUsername(newUsername)) return alert('Username must be 3-30 characters, letters/numbers/underscores only.');
-      if (newEmail && !Security.isValidEmail(newEmail)) return alert('Please enter a valid email address.');
-
-      const a = DB.admin || {};
-      const oldUsername = a.user;
-
-      // Check if new username is taken by another user
-      if (newUsername !== oldUsername) {
-        const existing = await db.ref('agapay/mentees/' + newUsername).once('value');
-        const existingAdmin = await db.ref('agapay/admin/user').once('value');
-        if (existing.exists() || (existingAdmin.val() === newUsername && oldUsername !== newUsername)) {
-          return alert('Username already taken.');
-        }
-      }
-
-      // Update admin data
-      const updates = { user: newUsername, name: newName, email: newEmail };
-      await db.ref('agapay/admin').update(updates);
-
-      // Update session storage
-      const session = JSON.parse(sessionStorage.getItem('agapayUser'));
-      if (session) {
-        session.name = newName;
-        sessionStorage.setItem('agapayUser', JSON.stringify(session));
-      }
-
-      const el = document.getElementById('profileUpdated');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    async function changePassword() {
-      const c = document.getElementById('currentPass').value;
-      const n = document.getElementById('newPass').value;
-      const cf = document.getElementById('confirmPass').value;
-      const a = DB.admin || { user: 'admin', password: 'agapayadmin' };
-      if (c !== a.password) return alert('Current password incorrect.');
-      if (n !== cf) return alert('Passwords do not match.');
-      if (n.length < 6) return alert('Password must be at least 6 characters.');
-      await db.ref('agapay/admin/password').set(n);
-      document.getElementById('currentPass').value = '';
-      document.getElementById('newPass').value = '';
-      document.getElementById('confirmPass').value = '';
-      const el = document.getElementById('passUpdated');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    async function addMentee() {
-      if (!Security.canSubmit('addMentee', 5000)) return alert('Please wait before adding another mentee.');
-      const u = Security.sanitizeInput(document.getElementById('newMenteeUser').value.trim().toLowerCase(), 30);
-      const n = Security.sanitizeInput(document.getElementById('newMenteeName').value.trim(), 100);
-      const p = document.getElementById('newMenteePass').value;
-      if (!u || !n || !p) return alert('Fill in all fields.');
-      if (!Security.isValidUsername(u)) return alert('Username must be 3-30 characters, letters/numbers/underscores only.');
-      if (p.length < 6) return alert('Password must be at least 6 characters.');
-      const menteesObj = getDataObj('mentees');
-      if (Object.values(menteesObj).find(m => m.user === u)) return alert('Username exists.');
-      await db.ref('agapay/mentees/' + u).set({
-        user: u, password: p, name: n, email: u + '@phinmaed.com'
-      });
-      document.getElementById('newMenteeUser').value = '';
-      document.getElementById('newMenteeName').value = '';
-      document.getElementById('newMenteePass').value = '';
-      const el = document.getElementById('menteeAdded');
-      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    // ===== INVITE ADMIN =====
-    async function inviteAdmin() {
-      if (!Security.canSubmit('inviteAdmin', 10000)) return alert('Please wait before sending another invitation.');
-      const email = Security.sanitizeInput(document.getElementById('inviteEmail').value.trim(), 100);
-      if (!email || !Security.isValidEmail(email)) return alert('Enter a valid email address.');
-
-      const token = 'agapay_' + btoa(email + '_' + Date.now()).replace(/=/g, '');
-      const baseUrl = window.location.origin + window.location.pathname.replace('login.html', '');
-      const link = baseUrl + 'admin-register.html?token=' + token + '&email=' + encodeURIComponent(email);
-
-      await db.ref('agapay/adminInvites/' + token).set({
-        email, token,
-        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
-        status: 'pending'
-      });
-
-      document.getElementById('inviteEmail').value = '';
-      document.getElementById('inviteLink').value = link;
-      document.getElementById('inviteLinkBox').style.display = 'block';
-
-      emailjs.send('service_ov5dper', 'template_jvvpnp5', {
-        email, name: email.split('@')[0],
-        invitation_link: link, from_name: 'Agapay Mentorship'
-      }).then(() => {
-        const el = document.getElementById('inviteSent');
-        el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-      }).catch(err => {
-        console.error('Email send failed:', err);
-        alert('Email sending failed. Link copied instead. You can share it manually.');
-        navigator.clipboard.writeText(link);
-      });
-    }
-
-    function copyInviteLink() {
-      const input = document.getElementById('inviteLink');
-      input.select();
-      document.execCommand('copy');
-      alert('Link copied to clipboard!');
-    }
-
-    function renderPendingInvites() {
-      const invitesObj = getDataObj('adminInvites');
-      const invites = Object.values(invitesObj);
-      const el = document.getElementById('pendingInvites');
-      if (!invites.length) { el.innerHTML = ''; return; }
-
-      el.innerHTML = '<h4 style="margin-bottom:10px;">Pending Invitations</h4>' +
-        invites.map(inv => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-alt);border-radius:8px;margin-bottom:8px;border:1px solid var(--gray-200);">
-            <div>
-              <div style="font-weight:600;font-size:0.9rem;">${inv.email}</div>
-              <div style="font-size:0.8rem;color:var(--text-light);">${inv.date} — <span style="color:${inv.status === 'accepted' ? '#22c55e' : '#f59e0b'};">${inv.status}</span></div>
-            </div>
-            ${inv.status === 'pending' ? `<button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="cancelInvite('${inv.token}')">Cancel</button>` : ''}
-          </div>
-        `).join('');
-    }
-
-    function cancelInvite(token) {
-      if (!confirm('Cancel this invitation?')) return;
-      db.ref('agapay/adminInvites/' + token).remove();
-    }
-
-    function updateStats() {
-      const feedback = getData('feedback');
-      const posts = getData('posts');
-      document.getElementById('totalPosts').textContent = posts.length;
-      document.getElementById('totalQuestions').textContent = feedback.filter(f => !f.reply).length;
-    }
-
-    // ===== SESSION CHECK =====
-    const session = sessionStorage.getItem('agapayUser');
-    if (session) {
-      const u = JSON.parse(session);
-      if (u.role === 'mentee') showMenteeDashboard(u.name, u.picture);
-      else if (u.role === 'admin') showAdminDashboard();
-    }
-  </script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>

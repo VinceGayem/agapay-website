@@ -75,6 +75,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
 let lastScroll = 0;
 window.addEventListener('scroll', () => {
   const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
   const currentScroll = window.pageYOffset;
   
   if (currentScroll > 100) {
