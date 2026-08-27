@@ -1,0 +1,84 @@
+{
+  "rules": {
+    "agapay": {
+      "admin": {
+        ".read": true,
+        ".write": "auth != null || root.child('agapay/adminInvitedUsers').child(data.child('user').val()).exists()"
+      },
+      "mentees": {
+        ".read": true,
+        ".write": true
+      },
+      "loggedUsers": {
+        ".read": true,
+        ".write": true
+      },
+      "posts": {
+        ".read": true,
+        "$postId": {
+          ".write": true,
+          "comments": {
+            "$commentId": {
+              ".validate": "newData.hasChildren(['author', 'text', 'time'])",
+              "author": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+              "text": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000" },
+              "time": { ".validate": "newData.isString()" }
+            }
+          }
+        }
+      },
+      "feedback": {
+        ".read": true,
+        "$feedbackId": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['from', 'user', 'message', 'date'])",
+          "from": { ".validate": "newData.isString() && newData.val().length <= 100" },
+          "user": { ".validate": "newData.isString() && newData.val().length <= 50" },
+          "message": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000" },
+          "reply": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 2000)" }
+        }
+      },
+      "sessions": {
+        ".read": true,
+        ".write": true,
+        "$sessionId": {
+          ".validate": "newData.hasChildren(['user', 'title', 'date', 'status'])",
+          "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "status": { ".validate": "newData.isString() && (newData.val() === 'done' || newData.val() === 'upcoming')" }
+        }
+      },
+      "tasks": {
+        ".read": true,
+        ".write": true,
+        "$taskId": {
+          ".validate": "newData.hasChildren(['title', 'desc', 'deadline'])",
+          "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "desc": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000" }
+        }
+      },
+      "taskAnswers": {
+        ".read": true,
+        ".write": true,
+        "$answerId": {
+          ".validate": "newData.hasChildren(['taskId', 'user', 'author', 'answer', 'time'])",
+          "answer": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 5000" },
+          "author": { ".validate": "newData.isString() && newData.val().length <= 100" }
+        }
+      },
+      "adminInvites": {
+        ".read": true,
+        ".write": true
+      },
+      "adminInvitedUsers": {
+        ".read": true,
+        ".write": true,
+        "$username": {
+          ".validate": "newData.hasChildren(['user', 'password', 'name', 'email'])",
+          "password": { ".validate": "newData.isString() && newData.val().length >= 6" },
+          "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+          "email": { ".validate": "newData.isString() && newData.val().length <= 100" }
+        }
+      }
+    }
+  }
+}

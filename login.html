@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com;">
   <title>Login - Agapay Mentorship</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -839,18 +843,34 @@
     }
 
     // ===== LOGIN =====
+    const loginAttempts = { mentee: 0, admin: 0, lockUntil: 0 };
+    
     document.getElementById('menteeForm').addEventListener('submit', e => {
       e.preventDefault();
+      if (Date.now() < loginAttempts.lockUntil) {
+        const waitSec = Math.ceil((loginAttempts.lockUntil - Date.now()) / 1000);
+        document.getElementById('menteeError').textContent = `Too many attempts. Wait ${waitSec}s.`;
+        document.getElementById('menteeError').style.display = 'block';
+        return;
+      }
       const u = document.getElementById('menteeUser').value.trim().toLowerCase();
       const p = document.getElementById('menteePass').value;
       const menteesObj = getDataObj('mentees');
       const m = Object.values(menteesObj).find(m => m.user === u && m.password === p);
       if (m) {
+        loginAttempts.mentee = 0;
         document.getElementById('menteeError').style.display = 'none';
         trackUser(m.user, m.name, m.email);
         sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'mentee', name: m.name, user: m.user }));
         showMenteeDashboard(m.name);
       } else {
+        loginAttempts.mentee++;
+        if (loginAttempts.mentee >= 5) {
+          loginAttempts.lockUntil = Date.now() + 60000;
+          document.getElementById('menteeError').textContent = 'Too many failed attempts. Locked for 60s.';
+        } else {
+          document.getElementById('menteeError').textContent = `Wrong username or password. (${5 - loginAttempts.mentee} tries left)`;
+        }
         document.getElementById('menteeError').style.display = 'block';
         document.getElementById('menteePass').value = '';
       }
@@ -858,6 +878,12 @@
 
     document.getElementById('adminForm').addEventListener('submit', e => {
       e.preventDefault();
+      if (Date.now() < loginAttempts.lockUntil) {
+        const waitSec = Math.ceil((loginAttempts.lockUntil - Date.now()) / 1000);
+        document.getElementById('adminError').textContent = `Too many attempts. Wait ${waitSec}s.`;
+        document.getElementById('adminError').style.display = 'block';
+        return;
+      }
       const u = document.getElementById('adminUser').value.trim().toLowerCase();
       const p = document.getElementById('adminPass').value;
       const a = DB.admin || { user: 'admin', password: 'agapayadmin' };
@@ -865,11 +891,19 @@
       const invitedAdmin = Object.values(invitedObj).find(a => a.user === u && a.password === p);
 
       if ((u === a.user && p === a.password) || invitedAdmin) {
+        loginAttempts.admin = 0;
         document.getElementById('adminError').style.display = 'none';
         const adminName = invitedAdmin ? invitedAdmin.name : 'Admin';
         sessionStorage.setItem('agapayUser', JSON.stringify({ role: 'admin', name: adminName }));
         showAdminDashboard();
       } else {
+        loginAttempts.admin++;
+        if (loginAttempts.admin >= 5) {
+          loginAttempts.lockUntil = Date.now() + 60000;
+          document.getElementById('adminError').textContent = 'Too many failed attempts. Locked for 60s.';
+        } else {
+          document.getElementById('adminError').textContent = `Wrong username or password. (${5 - loginAttempts.admin} tries left)`;
+        }
         document.getElementById('adminError').style.display = 'block';
         document.getElementById('adminPass').value = '';
       }
@@ -944,8 +978,9 @@
 
     // ===== ADMIN: POSTS =====
     async function createPost() {
-      const title = document.getElementById('postTitle').value.trim();
-      const body = document.getElementById('postBody').value.trim();
+      if (!Security.canSubmit('createPost', 3000)) return alert('Please wait before posting again.');
+      const title = Security.sanitizeInput(document.getElementById('postTitle').value, 200);
+      const body = Security.sanitizeInput(document.getElementById('postBody').value, 2000);
       const tag = document.getElementById('postTag').value;
       if (!title || !body) return alert('Please fill in all fields.');
       const id = Date.now();
@@ -1047,13 +1082,14 @@
     }
 
     async function addComment(postKey, role) {
+      if (!Security.canSubmit('addComment-' + postKey, 2000)) return alert('Please wait before commenting again.');
       const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postKey);
-      const text = input.value.trim();
+      const text = Security.sanitizeInput(input.value, 2000);
       if (!text) return;
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
       const commentKey = db.ref('agapay/posts/' + postKey + '/comments').push().key;
       await db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).set({
-        author: user.name, user: user.user, role, text,
+        author: Security.escapeHtml(user.name), user: user.user, role, text,
         time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       });
       input.value = '';
@@ -1138,12 +1174,13 @@
 
     // ===== FEEDBACK / QUESTIONS =====
     function submitFeedback() {
-      const text = document.getElementById('menteeFeedback').value.trim();
+      if (!Security.canSubmit('submitFeedback', 5000)) return alert('Please wait before submitting again.');
+      const text = Security.sanitizeInput(document.getElementById('menteeFeedback').value, 2000);
       if (!text) return;
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
       const id = Date.now();
       db.ref('agapay/feedback/' + id).set({
-        id, from: user.name, user: user.user, message: text,
+        id, from: Security.escapeHtml(user.name), user: user.user, message: text,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         reply: null
       });
@@ -1302,7 +1339,8 @@
     }
 
     function sendReply(key) {
-      const text = document.getElementById('reply-' + key).value.trim();
+      if (!Security.canSubmit('sendReply', 3000)) return alert('Please wait before sending another reply.');
+      const text = Security.sanitizeInput(document.getElementById('reply-' + key).value, 2000);
       if (!text) return;
       db.ref('agapay/feedback/' + key + '/reply').set(text);
     }
@@ -1359,8 +1397,9 @@
 
     // ===== SESSIONS =====
     function addSession() {
+      if (!Security.canSubmit('addSession', 3000)) return alert('Please wait before adding another session.');
       const user = document.getElementById('sessionMentee').value;
-      const title = document.getElementById('sessionTitle').value.trim();
+      const title = Security.sanitizeInput(document.getElementById('sessionTitle').value, 200);
       const date = document.getElementById('sessionDate').value;
       const status = document.getElementById('sessionStatus').value;
       if (!user || !title || !date) return alert('Please fill in all fields.');
@@ -1431,8 +1470,9 @@
 
     // ===== TASKS =====
     async function createTask() {
-      const title = document.getElementById('taskTitle').value.trim();
-      const desc = document.getElementById('taskDesc').value.trim();
+      if (!Security.canSubmit('createTask', 3000)) return alert('Please wait before creating another task.');
+      const title = Security.sanitizeInput(document.getElementById('taskTitle').value, 200);
+      const desc = Security.sanitizeInput(document.getElementById('taskDesc').value, 2000);
       const deadlineDate = document.getElementById('taskDeadline').value;
       const deadlineTime = document.getElementById('taskDeadlineTime').value;
       if (!title || !desc || !deadlineDate || !deadlineTime) return alert('Please fill in all fields.');
@@ -1625,15 +1665,16 @@
     }
 
     function submitTaskAnswer(taskId) {
+      if (!Security.canSubmit('submitTaskAnswer', 5000)) return alert('Please wait before submitting again.');
       const textarea = document.getElementById('taskAnswer-' + taskId);
-      const answer = textarea.value.trim();
+      const answer = Security.sanitizeInput(textarea.value, 5000);
       if (!answer) return alert('Please write your answer.');
 
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
       const id = Date.now();
       db.ref('agapay/taskAnswers/' + id).set({
         id, taskId,
-        user: user.user, author: user.name, answer,
+        user: user.user, author: Security.escapeHtml(user.name), answer,
         time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       });
     }
@@ -1656,10 +1697,13 @@
     }
 
     async function addMentee() {
-      const u = document.getElementById('newMenteeUser').value.trim().toLowerCase();
-      const n = document.getElementById('newMenteeName').value.trim();
+      if (!Security.canSubmit('addMentee', 5000)) return alert('Please wait before adding another mentee.');
+      const u = Security.sanitizeInput(document.getElementById('newMenteeUser').value.trim().toLowerCase(), 30);
+      const n = Security.sanitizeInput(document.getElementById('newMenteeName').value.trim(), 100);
       const p = document.getElementById('newMenteePass').value;
       if (!u || !n || !p) return alert('Fill in all fields.');
+      if (!Security.isValidUsername(u)) return alert('Username must be 3-30 characters, letters/numbers/underscores only.');
+      if (p.length < 6) return alert('Password must be at least 6 characters.');
       const menteesObj = getDataObj('mentees');
       if (Object.values(menteesObj).find(m => m.user === u)) return alert('Username exists.');
       await db.ref('agapay/mentees/' + u).set({
@@ -1674,8 +1718,9 @@
 
     // ===== INVITE ADMIN =====
     async function inviteAdmin() {
-      const email = document.getElementById('inviteEmail').value.trim();
-      if (!email || !email.includes('@')) return alert('Enter a valid email address.');
+      if (!Security.canSubmit('inviteAdmin', 10000)) return alert('Please wait before sending another invitation.');
+      const email = Security.sanitizeInput(document.getElementById('inviteEmail').value.trim(), 100);
+      if (!email || !Security.isValidEmail(email)) return alert('Enter a valid email address.');
 
       const token = 'agapay_' + btoa(email + '_' + Date.now()).replace(/=/g, '');
       const baseUrl = window.location.origin + window.location.pathname.replace('login.html', '');
