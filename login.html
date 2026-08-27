@@ -1244,14 +1244,16 @@
       }
     });
 
-    const { data: { session }, error } = await db.auth.getSession();
-    console.log('Session:', session, 'Error:', error);
-    if (session?.user) {
-      console.log('Found existing session, loading profile...');
-      await loadUserProfile(session.user);
-    } else {
-      console.log('No existing session, showing login.');
-    }
+    (async () => {
+      const { data: { session }, error } = await db.auth.getSession();
+      console.log('Session:', session, 'Error:', error);
+      if (session?.user) {
+        console.log('Found existing session, loading profile...');
+        await loadUserProfile(session.user);
+      } else {
+        console.log('No existing session, showing login.');
+      }
+    })();
   </script>
 </body>
 </html>
