@@ -312,6 +312,38 @@
       min-width: 0;
     }
 
+    /* ===== REACTIONS ===== */
+    .reactions-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--gray-200); }
+    .reaction-btn {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+      border-radius: 20px; border: 1px solid var(--gray-200); background: var(--bg);
+      cursor: pointer; font-size: 0.85rem; transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      user-select: none;
+    }
+    .reaction-btn:hover { transform: scale(1.1); border-color: var(--gold); background: rgba(212,168,67,0.05); }
+    .reaction-btn:active { transform: scale(0.92); }
+    .reaction-btn.reacted { border-color: var(--gold); background: rgba(212,168,67,0.1); }
+    .reaction-btn .r-count { font-weight: 600; font-size: 0.8rem; color: var(--text-light); }
+    .reaction-btn.reacted .r-count { color: var(--gold); }
+    .reaction-add {
+      display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      border-radius: 50%; border: 1px dashed var(--gray-300); background: transparent;
+      cursor: pointer; font-size: 0.9rem; transition: all 0.25s ease; color: var(--text-light);
+    }
+    .reaction-add:hover { border-color: var(--gold); color: var(--gold); transform: scale(1.1); background: rgba(212,168,67,0.05); }
+    .reaction-picker {
+      display: none; position: absolute; bottom: 100%; left: 0; background: var(--card-bg);
+      border: 1px solid var(--gray-200); border-radius: 12px; padding: 8px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 10; gap: 4px;
+    }
+    .reaction-picker.show { display: flex; flex-wrap: wrap; max-width: 200px; }
+    .reaction-picker span {
+      font-size: 1.2rem; padding: 6px; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s ease; line-height: 1;
+    }
+    .reaction-picker span:hover { background: rgba(212,168,67,0.1); transform: scale(1.25); }
+    .reaction-wrapper { position: relative; display: inline-block; }
+
     /* ===== FEEDBACK ===== */
     .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .feedback-from { font-weight: 600; font-size: 0.9rem; }
@@ -846,6 +878,54 @@
       });
     }
 
+    // ===== REACTIONS =====
+    const REACTION_EMOJIS = ['👍','❤️','😂','😮','😢','🔥','✨','👏','💯','🎉'];
+
+    async function toggleReaction(postId, emoji) {
+      const userId = currentUser.id;
+      const { data: existing } = await db.from('reactions').select('id').eq('post_id', postId).eq('user_id', userId).eq('emoji', emoji).maybeSingle();
+      if (existing) {
+        await db.from('reactions').delete().eq('id', existing.id);
+      } else {
+        await db.from('reactions').insert({ post_id: postId, user_id: userId, emoji });
+      }
+      await renderAll();
+    }
+
+    async function getReactionsHTML(postId) {
+      const { data: reactions } = await db.from('reactions').select('emoji, user_id').eq('post_id', postId);
+      const userId = currentUser.id;
+      const counts = {};
+      (reactions || []).forEach(r => {
+        if (!counts[r.emoji]) counts[r.emoji] = { count: 0, reacted: false };
+        counts[r.emoji].count++;
+        if (r.user_id === userId) counts[r.emoji].reacted = true;
+      });
+
+      let html = '<div class="reactions-bar">';
+      Object.entries(counts).forEach(([emoji, data]) => {
+        html += `<button class="reaction-btn ${data.reacted ? 'reacted' : ''}" onclick="toggleReaction('${postId}', '${emoji}')"><span>${emoji}</span><span class="r-count">${data.count}</span></button>`;
+      });
+      html += `<div class="reaction-wrapper"><button class="reaction-add" onclick="togglePicker(this)">+</button><div class="reaction-picker" id="picker-${postId}">`;
+      REACTION_EMOJIS.forEach(e => {
+        html += `<span onclick="toggleReaction('${postId}', '${e}')">${e}</span>`;
+      });
+      html += '</div></div></div>';
+      return html;
+    }
+
+    function togglePicker(btn) {
+      const picker = btn.nextElementSibling;
+      document.querySelectorAll('.reaction-picker.show').forEach(p => { if (p !== picker) p.classList.remove('show'); });
+      picker.classList.toggle('show');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.reaction-wrapper')) {
+        document.querySelectorAll('.reaction-picker.show').forEach(p => p.classList.remove('show'));
+      }
+    });
+
     // ===== HELPER: ESCAPE HTML =====
     function esc(str) {
       if (!str) return '';
@@ -938,6 +1018,7 @@
       el.innerHTML = (await Promise.all(posts.map(async p => {
         const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
+        const reactionsHtml = await getReactionsHTML(p.id);
         return `
         <div class="post-item">
           <div class="post-header">
@@ -958,6 +1039,7 @@
               <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost('${p.id}')">Cancel</button>
             </div>
           </div>
+          ${reactionsHtml}
           <div class="comments-section">
             <div class="comments-header">💬 ${cm.length} Comment${cm.length !== 1 ? 's' : ''}</div>
             ${cm.map(c => `
@@ -1078,12 +1160,14 @@
       el.innerHTML = (await Promise.all(posts.map(async p => {
         const { data: comments } = await db.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
         const cm = comments || [];
+        const reactionsHtml = await getReactionsHTML(p.id);
         return `
         <div class="post-item">
           <div class="post-header"><span class="post-date">${fmtDate(p.created_at)}</span></div>
           <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${esc(p.tag.charAt(0).toUpperCase() + p.tag.slice(1))}</span>
           <div class="post-title">${esc(p.title)}</div>
           <div class="post-body">${esc(p.body)}</div>
+          ${reactionsHtml}
           <div class="comments-section">
             <div class="comments-header">💬 ${cm.length} Comment${cm.length !== 1 ? 's' : ''}</div>
             ${cm.map(c => {
