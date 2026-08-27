@@ -463,11 +463,17 @@
 
     // ===== AUTH: SIGN IN WITH GOOGLE =====
     async function signInWithGoogle() {
+      console.log('Starting Google sign in...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + '/login.html' }
       });
-      if (error) console.error('Google sign in error:', error);
+      if (error) {
+        console.error('Google sign in error:', error);
+        alert('Google sign in failed: ' + error.message);
+      } else {
+        console.log('Google sign in redirect:', data);
+      }
     }
 
     // ===== AUTH: ADMIN LOGIN =====
@@ -501,13 +507,16 @@
     // ===== AUTH: LOAD USER PROFILE =====
     async function loadUserProfile(user) {
       if (!user) return;
+      console.log('Loading profile for:', user.id, user.email);
 
       // Check if profile exists
-      const { data: profile } = await supabase
+      const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      console.log('Existing profile:', profile, 'Error:', profileErr);
 
       if (profile) {
         currentUser = { id: user.id, email: user.email, name: profile.name, picture: profile.picture, role: profile.role };
@@ -519,11 +528,15 @@
         // Check if this is a known admin email
         const isAdmin = await checkIsAdmin(user.email);
 
-        const { data: newProfile } = await supabase
+        console.log('Creating new profile:', { name, email: user.email, role: isAdmin ? 'admin' : 'mentee' });
+
+        const { data: newProfile, error: insertErr } = await supabase
           .from('profiles')
           .insert({ user_id: user.id, name, email: user.email, role: isAdmin ? 'admin' : 'mentee', picture })
           .select()
           .single();
+
+        console.log('New profile created:', newProfile, 'Error:', insertErr);
 
         currentUser = { id: user.id, email: user.email, name, picture, role: newProfile?.role || 'mentee' };
       }
@@ -1217,9 +1230,14 @@
 
     // ===== INIT =====
     (async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Init started, supabase client:', typeof supabase);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('Session:', session, 'Error:', error);
       if (session?.user) {
+        console.log('Found existing session, loading profile...');
         await loadUserProfile(session.user);
+      } else {
+        console.log('No existing session, showing login.');
       }
     })();
   </script>
