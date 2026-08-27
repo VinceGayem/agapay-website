@@ -372,6 +372,7 @@
         <button class="admin-tab" data-tab="tasks" onclick="showAdminTab('tasks')">📝 Tasks</button>
         <button class="admin-tab" data-tab="posts" onclick="showAdminTab('posts')">📢 Posts</button>
         <button class="admin-tab" data-tab="questions" onclick="showAdminTab('questions')">❓ Questions</button>
+        <button class="admin-tab" data-tab="logs" onclick="showAdminTab('logs')">📋 Logs</button>
         <button class="admin-tab" data-tab="settings" onclick="showAdminTab('settings')">⚙️ Settings</button>
       </div>
     </div>
@@ -428,6 +429,16 @@
         <h3>❓ Mentee Questions</h3>
         <div id="allFeedbackList"></div>
         <p id="noFeedback" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No questions yet.</p>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="tab-content" id="atab-logs">
+      <div class="dash-card">
+        <h3>📋 Activity Logs</h3>
+        <p style="margin-bottom:15px;font-size:0.85rem;color:var(--text-light);">Shows edited and deleted comments by mentees.</p>
+        <div id="adminLogsList"></div>
+        <p id="noLogs" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No logs yet.</p>
       </div>
     </div>
 
@@ -677,6 +688,7 @@
           await renderAdminTasks().catch(e => console.error('renderAdminTasks:', e));
           await renderAdminPosts().catch(e => console.error('renderAdminPosts:', e));
           await renderAllFeedback().catch(e => console.error('renderAllFeedback:', e));
+          await renderLogs().catch(e => console.error('renderLogs:', e));
           await updateAdminStats().catch(e => console.error('updateAdminStats:', e));
         } else {
           await renderMenteePosts().catch(e => console.error('renderMenteePosts:', e));
@@ -822,6 +834,35 @@
     async function deleteComment(id) {
       if (!confirm('Delete this comment?')) return;
       await db.from('comments').delete().eq('id', id);
+      await renderAll();
+    }
+
+    function editMenteeComment(id) {
+      document.getElementById('c-text-' + id).style.display = 'none';
+      document.getElementById('c-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditMenteeComment(id) {
+      document.getElementById('c-text-' + id).style.display = '';
+      document.getElementById('c-edit-' + id).style.display = 'none';
+    }
+
+    async function saveMenteeComment(id) {
+      const text = document.getElementById('c-input-' + id).value.trim();
+      if (!text) { alert('Comment cannot be empty.'); return; }
+      const { data: old } = await db.from('comments').select('text').eq('id', id).maybeSingle();
+      await db.from('comments').update({
+        text,
+        original_text: old?.original_text || old?.text,
+        edited_at: new Date().toISOString()
+      }).eq('id', id);
+      await renderAll();
+    }
+
+    async function deleteMenteeComment(id) {
+      if (!confirm('Delete this comment?')) return;
+      await db.from('comments').update({ deleted_by_mentee: true }).eq('id', id);
+      await renderAll();
     }
 
     // ===== MENTEE: POSTS =====
@@ -843,13 +884,30 @@
           <div class="post-body">${esc(p.body)}</div>
           <div class="comments-section">
             <div class="comments-header">💬 ${cm.length} Comment${cm.length !== 1 ? 's' : ''}</div>
-            ${cm.map(c => `
+            ${cm.map(c => {
+              const isOwn = c.user_id === currentUser.id;
+              const deleted = c.deleted_by_mentee || c.deleted_by_admin;
+              if (deleted) return `<div class="comment-item" style="opacity:0.5;"><div class="comment-text" style="font-style:italic;font-size:0.85rem;">This comment was deleted.</div></div>`;
+              return `
               <div class="comment-item">
-                <div class="comment-author">${esc(c.author)} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
-                <div class="comment-text">${esc(c.text)}</div>
-                <div class="comment-time">${fmtDateTime(c.created_at)}</div>
-              </div>
-            `).join('')}
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div class="comment-author">${esc(c.author)} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''} ${c.edited_at ? '<span style="color:var(--text-light);font-size:0.7rem;">(edited)</span>' : ''}</div>
+                  ${isOwn ? `<div style="display:flex;gap:4px;">
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editMenteeComment('${c.id}')">✏️</button>
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteMenteeComment('${c.id}')">🗑️</button>
+                  </div>` : ''}
+                </div>
+                <div class="comment-text" id="c-text-${c.id}">${esc(c.text)}</div>
+                <div id="c-edit-${c.id}" style="display:none;margin-top:6px;">
+                  <input type="text" id="c-input-${c.id}" value="${esc(c.text)}" style="width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.85rem;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:6px;">
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-primary" style="padding:5px 12px;font-size:0.75rem;" onclick="saveMenteeComment('${c.id}')">Save</button>
+                    <button class="dash-logout" style="padding:5px 12px;font-size:0.75rem;" onclick="cancelEditMenteeComment('${c.id}')">Cancel</button>
+                  </div>
+                </div>
+                <div class="comment-time">${fmtDateTime(c.created_at)}${c.edited_at ? ' (edited ' + fmtDateTime(c.edited_at) + ')' : ''}</div>
+              </div>`;
+            }).join('')}
             <div class="comment-form">
               <input type="text" id="menteeComment-${p.id}" placeholder="Write a comment...">
               <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="addComment('${p.id}', 'mentee')">Comment</button>
@@ -1221,6 +1279,31 @@
     async function deleteSession(id) {
       if (!confirm('Delete this session?')) return;
       await db.from('sessions').delete().eq('id', id);
+    }
+
+    // ===== ADMIN: LOGS =====
+    async function renderLogs() {
+      const { data: edited } = await db.from('comments').select('*').not('edited_at', 'is', null);
+      const { data: deleted } = await db.from('comments').select('*').or('deleted_by_mentee.eq.true,deleted_by_admin.eq.true');
+      const el = document.getElementById('adminLogsList');
+      const no = document.getElementById('noLogs');
+      const logs = [
+        ...(edited || []).map(c => ({ type: 'edited', author: c.author, text: c.text, original: c.original_text, time: c.edited_at, post_id: c.post_id })),
+        ...(deleted || []).map(c => ({ type: c.deleted_by_mentee ? 'deleted_by_mentee' : 'deleted_by_admin', author: c.author, text: c.original_text || c.text, time: c.created_at, post_id: c.post_id }))
+      ].sort((a, b) => new Date(b.time) - new Date(a.time));
+
+      if (!logs.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = logs.map(l => `
+        <div class="feedback-item" style="border-left:3px solid ${l.type === 'edited' ? 'var(--gold)' : '#ef4444'};">
+          <div class="feedback-header">
+            <span class="feedback-from">${l.type === 'edited' ? '✏️ Edited' : l.type === 'deleted_by_mentee' ? '🗑️ Deleted by mentee' : '🗑️ Deleted by admin'} by ${esc(l.author)}</span>
+            <span class="feedback-date">${fmtDateTime(l.time)}</span>
+          </div>
+          ${l.type === 'edited' && l.original ? `<div style="font-size:0.85rem;margin-top:6px;"><span style="color:var(--text-light);text-decoration:line-through;">${esc(l.original)}</span> → <span style="font-weight:600;">${esc(l.text)}</span></div>` : `<div class="feedback-message" style="opacity:0.7;">${esc(l.text)}</div>`}
+        </div>
+      `).join('');
     }
 
     // ===== STATS =====
