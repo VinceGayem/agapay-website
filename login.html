@@ -6,235 +6,289 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com;">
   <title>Login - Agapay Mentorship</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
-    body { min-height: 100vh; background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); }
-    .login-container { width: 100%; max-width: 440px; padding: 20px; min-height: 520px; }
-    .login-card { background: var(--card-bg); border-radius: 20px; padding: 50px 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; border: 1px solid var(--gray-200); }
+    /* ===== LOGIN PAGE ===== */
+    body.login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      flex-direction: column;
+      gap: 30px;
+      padding: 20px;
+    }
+    .login-wrapper { width: 100%; max-width: 480px; }
+    .login-role-switch {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .role-btn {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .role-btn.active {
+      background: var(--gold);
+      color: var(--navy);
+      border-color: var(--gold);
+    }
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+    .login-icon {
+      width: 70px; height: 70px;
+      background: rgba(212,168,67,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 20px;
+    }
     .login-logo { font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
     .login-logo span { color: var(--gold); }
-    .login-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 35px; }
-    .login-icon { width: 70px; height: 70px; background: rgba(212,168,67,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px; }
-    .login-form .form-group { text-align: left; margin-bottom: 20px; }
-    .login-form .form-group label { font-size: 0.85rem; margin-bottom: 6px; }
-    .login-form .form-group input { padding: 14px 16px; font-size: 0.95rem; }
-    .login-form .btn { width: 100%; justify-content: center; padding: 15px; font-size: 1rem; margin-top: 5px; }
-    .divider { display: flex; align-items: center; margin: 25px 0; gap: 15px; }
-    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
-    .divider span { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
-    .login-error { background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; display: none; text-align: left; }
-    [data-theme="dark"] .login-error { background: rgba(220,38,38,0.15); color: #f87171; }
-    .login-footer { margin-top: 25px; font-size: 0.85rem; color: var(--text-light); }
+    .login-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 30px; }
+    .login-form .form-group { text-align: left; margin-bottom: 18px; }
+    .login-form .form-group label {
+      font-size: 0.85rem; margin-bottom: 6px; display: block;
+      font-weight: 600; color: var(--text);
+    }
+    .login-form .form-group input {
+      width: 100%; padding: 14px 16px; border: 1px solid var(--gray-200);
+      border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+      background: var(--card-bg); color: var(--text);
+    }
+    .login-form .form-group input:focus { outline: none; border-color: var(--gold); }
+    .login-form .btn-primary { width: 100%; padding: 15px; font-size: 1rem; justify-content: center; margin-top: 5px; }
+    .error-box {
+      background: #fee2e2; color: #dc2626; padding: 10px 15px; border-radius: 8px;
+      font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
+    }
+    [data-theme="dark"] .error-box { background: rgba(220,38,38,0.15); color: #f87171; }
+    .success-box {
+      background: #dcfce7; color: #16a34a; padding: 10px 15px; border-radius: 8px;
+      font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
+    }
+    .divider { text-align: center; margin: 20px 0; position: relative; }
+    .divider::before {
+      content: ''; position: absolute; top: 50%; left: 0; right: 0;
+      height: 1px; background: var(--gray-200);
+    }
+    .divider span {
+      background: var(--card-bg); padding: 0 15px; position: relative;
+      color: var(--text-light); font-size: 0.85rem;
+    }
+    .google-btn {
+      width: 100%; padding: 14px; border: 1px solid var(--gray-200);
+      border-radius: 10px; background: var(--card-bg); color: var(--text);
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: var(--transition); font-family: inherit;
+    }
+    .google-btn:hover { border-color: var(--gold); }
+    .login-footer { margin-top: 20px; font-size: 0.85rem; color: var(--text-light); }
     .login-footer a { color: var(--gold); font-weight: 600; }
-    .role-switch { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
-    .role-btn { padding: 10px 24px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.6); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); font-family: inherit; }
-    .role-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.1); }
-    .role-btn:hover { border-color: var(--gold); color: var(--gold); }
-    .dashboard { display: none; width: 100%; max-width: 1000px; padding: 20px; margin: 80px auto 0; }
+
+    /* ===== DASHBOARD LAYOUT ===== */
+    .dashboard { display: none; margin: 80px auto 0; max-width: 1100px; padding: 30px 24px 60px; }
     .dashboard.active { display: block; }
-    .login-wrapper.hidden { display: none; }
-    .login-wrapper { margin-top: 40px; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-    .dash-header h1 { color: #ffffff; font-size: 1.8rem; }
+    .dash-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
+    }
+    .dash-header h1 { font-size: 1.8rem; font-weight: 700; }
     .dash-header h1 span { color: var(--gold); }
-    .dash-welcome { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
-    .dash-card { background: var(--card-bg); border-radius: 16px; padding: 30px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--gray-200); color: var(--text); }
-    .dash-card h3 { font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-    .dash-card p { color: var(--text-light); font-size: 0.95rem; line-height: 1.8; }
-    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-    .dash-stat { background: rgba(212,168,67,0.08); border-radius: 12px; padding: 20px; text-align: center; }
+    .dash-welcome { color: var(--text-light); font-size: 0.95rem; margin-top: 4px; }
+    .dash-logout {
+      padding: 10px 24px; border-radius: 10px; border: 2px solid var(--gray-200);
+      background: transparent; color: var(--text); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: var(--transition);
+    }
+    .dash-logout:hover { border-color: #ef4444; color: #ef4444; }
+    .dash-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px;
+    }
+    .dash-stat {
+      background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
+      padding: 20px; text-align: center;
+    }
     .dash-stat h4 { font-size: 1.8rem; color: var(--gold); font-weight: 700; }
-    .dash-stat p { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
-    .dash-logout { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit; }
-    .dash-logout:hover { border-color: #dc2626; color: #dc2626; }
-    .admin-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
-    .admin-tab { padding: 10px 20px; border-radius: 8px; border: none; background: rgba(212,168,67,0.08); color: var(--text-light); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); font-family: inherit; }
-    .admin-tab.active { background: var(--gold); color: var(--navy); }
-    .admin-tab:hover:not(.active) { background: rgba(212,168,67,0.15); }
+    .dash-stat p { color: var(--text-light); font-size: 0.85rem; margin-top: 4px; }
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .dash-card {
+      background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
+      padding: 25px;
+    }
+    .dash-card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+    .dash-card p { color: var(--text-light); font-size: 0.9rem; }
+
+    /* ===== TABS ===== */
+    .admin-tabs-wrapper { margin-bottom: 25px; }
+    .admin-tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      border-bottom: 2px solid var(--gray-200); padding-bottom: 10px;
+    }
+    .admin-tab {
+      padding: 10px 20px; border-radius: 10px 10px 0 0; border: none;
+      background: transparent; color: var(--text-light); font-weight: 600;
+      font-size: 0.9rem; cursor: pointer; transition: var(--transition);
+    }
+    .admin-tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(212,168,67,0.05); }
+    .admin-tab:hover { color: var(--gold); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .admin-tabs-wrapper { position: relative; }
-    .mobile-menu-toggle { display: none; background: rgba(212,168,67,0.1); border: 2px solid rgba(212,168,67,0.3); border-radius: 10px; padding: 12px 16px; cursor: pointer; width: 100%; margin-bottom: 15px; font-family: inherit; }
-    .mobile-menu-toggle span { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; font-size: 0.95rem; }
-    .mobile-menu-toggle .hamburger { display: flex; flex-direction: column; gap: 4px; }
-    .mobile-menu-toggle .hamburger span { width: 22px; height: 2px; background: var(--gold); border-radius: 2px; transition: var(--transition); }
-    .mobile-menu-toggle.active .hamburger span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
-    .mobile-menu-toggle.active .hamburger span:nth-child(2) { opacity: 0; }
-    .mobile-menu-toggle.active .hamburger span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
-    .mentee-list { display: flex; flex-direction: column; gap: 12px; }
-    .mentee-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-alt); padding: 18px 22px; border-radius: 12px; border: 1px solid var(--gray-200); transition: var(--transition); }
-    .mentee-item:hover { border-color: var(--gold); }
-    .mentee-info { display: flex; align-items: center; gap: 15px; }
-    .mentee-avatar { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--navy-light)); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--gold); font-weight: 700; }
+    .mobile-menu-toggle {
+      display: none; background: var(--gold); color: var(--navy); border: none;
+      padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; width: 100%; text-align: left; margin-bottom: 10px;
+    }
+
+    /* ===== LIST ITEMS ===== */
+    .mentee-item, .post-item, .feedback-item {
+      background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
+      padding: 18px; margin-bottom: 12px;
+    }
+    .mentee-info { display: flex; align-items: center; gap: 14px; }
+    .mentee-avatar {
+      width: 45px; height: 45px; border-radius: 50%; background: var(--navy);
+      color: var(--gold); display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1rem; min-width: 45px; overflow: hidden;
+    }
     .mentee-name { font-weight: 600; font-size: 0.95rem; }
-    .mentee-email { font-size: 0.8rem; color: var(--text-light); }
-    .mentee-status { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .mentee-email { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+    .mentee-status {
+      padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+    }
     .status-active { background: rgba(34,197,94,0.1); color: #22c55e; }
-    .post-item { background: var(--bg-alt); border-radius: 14px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--gray-200); transition: var(--transition); }
-    .post-item:hover { border-color: rgba(212,168,67,0.3); }
-    .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .status-pending { background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+    /* ===== POSTS & COMMENTS ===== */
+    .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .post-date { font-size: 0.8rem; color: var(--text-light); }
-    .post-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
-    .post-body { color: var(--text-light); line-height: 1.8; margin-bottom: 18px; font-size: 0.95rem; }
-    .post-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin-bottom: 15px; }
+    .post-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600; margin-bottom: 10px;
+    }
     .tag-announcement { background: rgba(59,130,246,0.1); color: #3b82f6; }
     .tag-update { background: rgba(34,197,94,0.1); color: #22c55e; }
     .tag-important { background: rgba(239,68,68,0.1); color: #ef4444; }
-    .comments-section { border-top: 1px solid var(--gray-200); padding-top: 15px; }
-    .comments-header { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; }
-    .comment-item { display: flex; gap: 12px; margin-bottom: 12px; padding: 12px 15px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--gray-200); }
-    .comment-content { flex: 1; }
+    .post-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .post-body { color: var(--text-light); font-size: 0.9rem; margin-bottom: 15px; line-height: 1.6; }
+    .comments-section { border-top: 1px solid var(--gray-200); padding-top: 12px; }
+    .comments-header { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 10px; }
+    .comment-item { padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .comment-item:last-child { border-bottom: none; }
     .comment-author { font-weight: 600; font-size: 0.85rem; }
-    .comment-text { font-size: 0.9rem; color: var(--text-light); margin-top: 3px; line-height: 1.6; }
-    .comment-time { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
-    .comment-form { display: flex; gap: 10px; margin-top: 12px; }
-    .comment-form input { flex: 1; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text); transition: var(--transition); }
-    .comment-form input:focus { outline: none; border-color: var(--gold); }
-    .comment-form .btn { padding: 10px 20px; font-size: 0.85rem; margin: 0; }
-    .feedback-list { display: flex; flex-direction: column; gap: 15px; }
-    .feedback-item { background: var(--bg-alt); border-radius: 12px; padding: 22px; border: 1px solid var(--gray-200); }
-    .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .feedback-from { font-weight: 600; }
-    .feedback-date { font-size: 0.8rem; color: var(--text-light); }
-    .feedback-message { color: var(--text-light); font-size: 0.95rem; line-height: 1.7; margin-bottom: 15px; padding: 12px 15px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--gray-200); }
-    .feedback-reply textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.9rem; font-family: inherit; background: var(--card-bg); color: var(--text); resize: vertical; min-height: 80px; transition: var(--transition); }
-    .feedback-reply textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-    .feedback-reply .btn { margin-top: 10px; padding: 10px 24px; font-size: 0.85rem; }
-    .reply-saved { background: rgba(34,197,94,0.1); color: #22c55e; padding: 8px 14px; border-radius: 6px; font-size: 0.8rem; margin-top: 8px; display: none; font-weight: 600; }
-    .reply-content { margin-top: 10px; padding: 12px 15px; background: rgba(212,168,67,0.05); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); line-height: 1.7; }
-    .reply-content strong { color: var(--gold); }
-    .settings-form .form-group { margin-bottom: 20px; }
-    .settings-form label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
-    .settings-form input { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition); }
-    .settings-form input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-    .settings-section { margin-bottom: 30px; }
-    .settings-section h4 { font-size: 1rem; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
-    .form-group textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); resize: vertical; min-height: 100px; transition: var(--transition); }
-    .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.1); }
-    .form-group select { width: 100%; padding: 12px 16px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text); transition: var(--transition); }
-    .form-group select:focus { outline: none; border-color: var(--gold); }
-    html { scroll-behavior: smooth; }
-    @media (max-width: 768px) {
-      .mobile-menu-toggle { display: block; }
-      .admin-tabs-wrapper .admin-tabs { display: none; flex-direction: column; position: absolute; z-index: 100; left: 0; right: 0; background: var(--card-bg); border-radius: 12px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 1px solid var(--gray-200); }
-      .admin-tabs-wrapper.mobile-open .admin-tabs { display: flex; }
-      .admin-tab { width: 100%; text-align: left; padding: 14px 16px; border-radius: 8px; }
-      .dash-header { flex-direction: row; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 20px; }
-      .dash-header h1 { font-size: 1.1rem; margin: 0; }
-      .dash-header h1 span { display: none; }
-      .dash-welcome { font-size: 0.8rem; margin: 0; }
-      .dash-logout { padding: 8px 14px; font-size: 0.8rem; border-width: 1px; }
-      .dash-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-      .dash-stat { padding: 12px 8px; border-radius: 10px; }
-      .dash-stat h4 { font-size: 1.2rem; margin: 0; }
-      .dash-stat p { font-size: 0.7rem; margin: 2px 0 0; }
-      .dash-grid { grid-template-columns: 1fr; gap: 12px; }
-      .dash-card { padding: 18px; margin-bottom: 12px; border-radius: 12px; }
-      .dashboard { padding: 12px; margin: 60px auto 0; max-width: 100%; }
-      .login-container { padding: 15px; }
-      .login-card { padding: 35px 25px; border-radius: 16px; }
-      .post-item { padding: 15px; border-radius: 12px; margin-bottom: 12px; }
-      .mentee-item { padding: 12px 15px; }
-      .settings-form { display: flex; flex-direction: column; gap: 15px; }
-      .settings-section { padding: 15px; }
-      body { min-height: 100vh; overflow-x: hidden; }
-      .comment-form { flex-direction: column; }
+    .comment-text { font-size: 0.9rem; color: var(--text); margin: 4px 0; }
+    .comment-time { font-size: 0.75rem; color: var(--text-light); }
+    .comment-form { display: flex; gap: 8px; margin-top: 10px; }
+    .comment-form input {
+      flex: 1; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.85rem; font-family: inherit; background: var(--bg); color: var(--text);
     }
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .dashboard { max-width: 800px; }
+
+    /* ===== FEEDBACK ===== */
+    .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .feedback-from { font-weight: 600; font-size: 0.9rem; }
+    .feedback-date { font-size: 0.8rem; color: var(--text-light); }
+    .feedback-message { color: var(--text); font-size: 0.9rem; margin-bottom: 10px; line-height: 1.6; }
+    .feedback-reply { margin-top: 12px; }
+    .feedback-reply textarea {
+      width: 100%; padding: 12px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 0.9rem; font-family: inherit; resize: vertical; min-height: 80px;
+      background: var(--bg); color: var(--text); margin-bottom: 8px;
+    }
+    .reply-content {
+      background: rgba(212,168,67,0.05); border-left: 3px solid var(--gold);
+      padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.9rem; margin-top: 10px;
+    }
+    .reply-saved {
+      color: #22c55e; font-size: 0.85rem; font-weight: 600;
+      display: none; margin-top: 8px;
+    }
+
+    /* ===== SETTINGS ===== */
+    .settings-form { display: flex; flex-direction: column; gap: 30px; }
+    .settings-section { padding: 20px 0; border-bottom: 1px solid var(--gray-200); }
+    .settings-section:last-child { border-bottom: none; }
+    .settings-section h4 { font-size: 1.05rem; margin-bottom: 15px; color: var(--gold); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .dash-stats { grid-template-columns: 1fr; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .admin-tabs { overflow-x: auto; flex-wrap: nowrap; }
+      .mobile-menu-toggle { display: block; }
+      .admin-tabs { display: none; }
+      .admin-tabs-wrapper.mobile-open .admin-tabs { display: flex; flex-direction: column; }
+      .admin-tab { text-align: left; }
     }
   </style>
 </head>
-<body>
+<body class="login-page">
 
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="nav-logo"><span>A</span>gapay</a>
-      <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="about.html">About Me</a>
-        <a href="program.html">Program</a>
-        <a href="mentors.html">Mentors</a>
-        <a href="resources.html">Resources</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html" class="btn btn-primary" style="padding: 8px 18px; font-size: 0.85rem; border-radius: 8px;">Login</a>
-        <button class="theme-toggle" id="themeToggle"></button>
-      </div>
-      <button class="hamburger"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
-
-  <!-- LOGIN -->
+  <!-- ===== LOGIN WRAPPER ===== -->
   <div class="login-wrapper" id="loginWrapper">
-    <div class="role-switch">
+    <div class="login-role-switch">
       <button class="role-btn active" id="btnMentee" onclick="switchRole('mentee')">Mentee</button>
       <button class="role-btn" id="btnAdmin" onclick="switchRole('admin')">Admin</button>
     </div>
 
-    <div class="login-container" id="menteeLogin">
-      <div class="login-card fade-up">
-        <div class="login-icon">&#127891;</div>
-        <div class="login-logo"><span>A</span>gapay</div>
-        <p class="login-subtitle">Mentee Login Portal</p>
-        <div class="login-error" id="menteeError">Incorrect username or password.</div>
-        <form class="login-form" id="menteeForm">
-          <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="menteeUser" placeholder="Enter your username" required>
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="menteePass" placeholder="Enter your password" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Sign In</button>
-        </form>
-        <div class="divider"><span>or</span></div>
-        <div id="g_id_onload" data-client_id="830300225606-d40nst2c74060tuubjb4gttmue3d8o8a.apps.googleusercontent.com" data-callback="handleGoogleLogin"></div>
-        <div class="g_id_signin" data-type="standard"></div>
-        <div class="login-footer"><p>Don't have an account? <a href="contact.html">Contact your mentor</a></p></div>
-      </div>
+    <!-- MENTEE LOGIN -->
+    <div class="login-card" id="menteeLogin">
+      <div class="login-icon">🎓</div>
+      <div class="login-logo"><span>A</span>gapay</div>
+      <p class="login-subtitle">Mentee Portal</p>
+      <button class="google-btn" onclick="signInWithGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
     </div>
 
-    <div class="login-container" id="adminLogin" style="display:none;">
-      <div class="login-card fade-up">
-        <div class="login-icon">&#128737;</div>
-        <div class="login-logo"><span>A</span>gapay</div>
-        <p class="login-subtitle">Admin Portal</p>
-        <div class="login-error" id="adminError">Invalid admin credentials.</div>
-        <form class="login-form" id="adminForm">
-          <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="adminUser" placeholder="Enter admin username" required>
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="adminPass" placeholder="Enter admin password" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Sign In</button>
-        </form>
-        <div class="divider"><span>or</span></div>
-        <div style="height:44px;"></div>
-        <div class="login-footer"><p>Don't have an account? <a href="contact.html">Contact your mentor</a></p></div>
-      </div>
+    <!-- ADMIN LOGIN -->
+    <div class="login-card" id="adminLogin" style="display:none;">
+      <div class="login-icon">🛡️</div>
+      <div class="login-logo"><span>A</span>gapay</div>
+      <p class="login-subtitle">Admin Portal</p>
+      <div class="error-box" id="adminError"></div>
+      <form class="login-form" id="adminForm" onsubmit="handleAdminLogin(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="adminEmail" placeholder="Enter admin email" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="adminPass" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+      </form>
+      <div class="login-footer"><p>Don't have an account? <a href="contact.html">Contact your mentor</a></p></div>
     </div>
   </div>
 
-  <!-- MENTEE DASHBOARD -->
+  <!-- ===== MENTEE DASHBOARD ===== -->
   <div class="dashboard" id="menteeDashboard">
     <div class="dash-header">
       <div>
         <h1>Welcome, <span id="menteeName">Mentee</span>!</h1>
         <p class="dash-welcome">Here's your mentorship dashboard.</p>
       </div>
-      <button class="dash-logout" onclick="logout()">Log Out</button>
+      <button class="dash-logout" onclick="signOut()">Log Out</button>
     </div>
     <div class="dash-stats">
       <div class="dash-stat"><h4 id="statDone">0</h4><p>Sessions Done</p></div>
@@ -242,57 +296,49 @@
       <div class="dash-stat"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
     <div class="admin-tabs-wrapper" id="menteeTabsWrapper">
-      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabsWrapper', 'menteeTabs')">
-        <span><span class="hamburger"><span></span><span></span><span></span></span> Menu</span>
-      </button>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabsWrapper','menteeTabs')"><span>☰ Menu</span></button>
       <div class="admin-tabs" id="menteeTabs">
-        <button class="admin-tab active" onclick="showMenteeTab('home')">&#127968; Home</button>
-        <button class="admin-tab" onclick="showMenteeTab('tasks')">&#128221; Tasks</button>
-        <button class="admin-tab" onclick="showMenteeTab('posts')">&#128226; Announcements</button>
-        <button class="admin-tab" onclick="showMenteeTab('feedback')">&#128172; Ask a Question</button>
+        <button class="admin-tab active" data-tab="home" onclick="showMenteeTab('home')">🏠 Home</button>
+        <button class="admin-tab" data-tab="tasks" onclick="showMenteeTab('tasks')">📝 Tasks</button>
+        <button class="admin-tab" data-tab="posts" onclick="showMenteeTab('posts')">📢 Announcements</button>
+        <button class="admin-tab" data-tab="feedback" onclick="showMenteeTab('feedback')">💬 Ask a Question</button>
       </div>
     </div>
     <div class="tab-content active" id="mtab-home">
       <div class="dash-grid">
-        <div class="dash-card"><h3>&#128203; My Tasks</h3><p>Complete your weekly reflection journal and submit it before the deadline. Review your goals for this month.</p></div>
-        <div class="dash-card"><h3>&#128197; Next Session</h3><p>Your next mentoring session is scheduled this week. Prepare your questions and updates on your progress.</p></div>
+        <div class="dash-card"><h3>📋 My Tasks</h3><p>Complete your weekly reflection journal and submit it before the deadline. Review your goals for this month.</p></div>
+        <div class="dash-card"><h3>📅 Next Session</h3><p>Your next mentoring session is scheduled this week. Prepare your questions and updates on your progress.</p></div>
       </div>
-      <div class="dash-card"><h3>&#128218; Resources</h3><p>Check the <a href="resources.html" style="color:var(--gold);font-weight:600;">Resources page</a> for study guides, time management tips, and career readiness materials.</p></div>
+      <div class="dash-card"><h3>📚 Resources</h3><p>Check the <a href="resources.html" style="color:var(--gold);font-weight:600;">Resources page</a> for study guides, time management tips, and career readiness materials.</p></div>
     </div>
-    <div class="tab-content" id="mtab-posts">
-      <div id="menteePostsList"></div>
-      <p id="noMenteePosts" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No announcements yet.</p>
-    </div>
-    <div class="tab-content" id="mtab-tasks">
-      <div id="menteeTasksList"></div>
-      <p id="noMenteeTasks" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No tasks yet.</p>
-    </div>
+    <div class="tab-content" id="mtab-posts"><div id="menteePostsList"></div><p id="noMenteePosts" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No announcements yet.</p></div>
+    <div class="tab-content" id="mtab-tasks"><div id="menteeTasksList"></div><p id="noMenteeTasks" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No tasks yet.</p></div>
     <div class="tab-content" id="mtab-feedback">
       <div class="dash-card">
-        <h3>&#128172; Ask Your Mentor</h3>
+        <h3>💬 Ask Your Mentor</h3>
         <p style="margin-bottom:15px;">Have a question or concern? Send it here and your mentor will respond.</p>
         <div class="feedback-reply">
-          <textarea id="menteeFeedback" placeholder="Type your question or feedback here..."></textarea>
+          <textarea id="menteeFeedback" placeholder="Type your question here..."></textarea>
           <button class="btn btn-primary" onclick="submitFeedback()">Send Question</button>
-          <div class="reply-saved" id="feedbackSent">Question sent successfully!</div>
+          <div class="reply-saved" id="feedbackSent">Question sent!</div>
         </div>
       </div>
-      <div class="dash-card">
-        <h3>&#128232; Your Questions</h3>
+      <div class="dash-card" style="margin-top:20px;">
+        <h3>📬 Your Questions</h3>
         <div id="myFeedbackList"></div>
         <p id="noMyFeedback" style="text-align:center;color:var(--text-light);padding:20px;display:none;">You haven't asked anything yet.</p>
       </div>
     </div>
   </div>
 
-  <!-- ADMIN DASHBOARD -->
+  <!-- ===== ADMIN DASHBOARD ===== -->
   <div class="dashboard" id="adminDashboard">
     <div class="dash-header">
       <div>
         <h1>Admin <span>Panel</span></h1>
         <p class="dash-welcome">Manage mentees, post announcements, and respond to questions.</p>
       </div>
-      <button class="dash-logout" onclick="logout()">Log Out</button>
+      <button class="dash-logout" onclick="signOut()">Log Out</button>
     </div>
     <div class="dash-stats">
       <div class="dash-stat"><h4 id="totalMentees">0</h4><p>Total Mentees</p></div>
@@ -300,25 +346,27 @@
       <div class="dash-stat"><h4 id="totalQuestions">0</h4><p>New Questions</p></div>
     </div>
     <div class="admin-tabs-wrapper" id="adminTabsWrapper">
-      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('adminTabsWrapper', 'adminTabs')">
-        <span><span class="hamburger"><span></span><span></span><span></span></span> Menu</span>
-      </button>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('adminTabsWrapper','adminTabs')"><span>☰ Menu</span></button>
       <div class="admin-tabs" id="adminTabs">
-        <button class="admin-tab active" onclick="showTab('mentees')">&#128100; Mentees</button>
-        <button class="admin-tab" onclick="showTab('sessions')">&#128197; Sessions</button>
-        <button class="admin-tab" onclick="showTab('tasks')">&#128221; Tasks</button>
-        <button class="admin-tab" onclick="showTab('posts')">&#128226; Posts</button>
-        <button class="admin-tab" onclick="showTab('questions')">&#10067; Questions</button>
-        <button class="admin-tab" onclick="showTab('settings')">&#9881; Settings</button>
+        <button class="admin-tab active" data-tab="mentees" onclick="showAdminTab('mentees')">👤 Mentees</button>
+        <button class="admin-tab" data-tab="sessions" onclick="showAdminTab('sessions')">📅 Sessions</button>
+        <button class="admin-tab" data-tab="tasks" onclick="showAdminTab('tasks')">📝 Tasks</button>
+        <button class="admin-tab" data-tab="posts" onclick="showAdminTab('posts')">📢 Posts</button>
+        <button class="admin-tab" data-tab="questions" onclick="showAdminTab('questions')">❓ Questions</button>
+        <button class="admin-tab" data-tab="settings" onclick="showAdminTab('settings')">⚙️ Settings</button>
       </div>
     </div>
-    <div class="tab-content active" id="tab-mentees">
-      <div class="dash-card"><h3>&#128100; All Mentees</h3><div class="mentee-list" id="menteeList"></div></div>
+
+    <!-- MENTEES -->
+    <div class="tab-content active" id="atab-mentees">
+      <div class="dash-card"><h3>👤 All Mentees</h3><div id="menteeList"></div></div>
     </div>
-    <div class="tab-content" id="tab-sessions">
+
+    <!-- SESSIONS -->
+    <div class="tab-content" id="atab-sessions">
       <div class="dash-card">
-        <h3>&#128197; Manage Sessions</h3>
-        <p style="margin-bottom:20px;">Add sessions for each mentee. Mark as done or upcoming.</p>
+        <h3>📅 Manage Sessions</h3>
+        <p style="margin-bottom:20px;">Add sessions for each mentee.</p>
         <div class="form-group"><label>Select Mentee</label><select id="sessionMentee"></select></div>
         <div class="form-group"><label>Session Title</label><input type="text" id="sessionTitle" placeholder="e.g. Week 1 - Introduction"></div>
         <div class="form-group"><label>Date</label><input type="date" id="sessionDate"></div>
@@ -326,75 +374,69 @@
         <button class="btn btn-primary" onclick="addSession()">Add Session</button>
         <div class="reply-saved" id="sessionAdded">Session added!</div>
       </div>
-      <div class="dash-card">
-        <h3>&#128203; All Sessions</h3>
-        <div id="sessionsList"></div>
-        <p id="noSessions" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No sessions yet.</p>
-      </div>
+      <div class="dash-card"><h3>📋 All Sessions</h3><div id="sessionsList"></div><p id="noSessions" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No sessions yet.</p></div>
     </div>
-    <div class="tab-content" id="tab-tasks">
+
+    <!-- TASKS -->
+    <div class="tab-content" id="atab-tasks">
       <div class="dash-card">
-        <h3>&#128221; Create Task</h3>
+        <h3>📝 Create Task</h3>
         <div class="form-group"><label>Task Title</label><input type="text" id="taskTitle" placeholder="e.g. Write a reflection essay"></div>
-        <div class="form-group"><label>Description</label><textarea id="taskDesc" placeholder="Describe the task requirements..."></textarea></div>
+        <div class="form-group"><label>Description</label><textarea id="taskDesc" placeholder="Describe the task requirements..." style="width:100%;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--bg);color:var(--text);resize:vertical;min-height:100px;"></textarea></div>
         <div class="form-group"><label>Deadline</label><div style="display:flex;gap:10px;"><input type="date" id="taskDeadline" style="flex:1;"><input type="time" id="taskDeadlineTime" style="flex:1;"></div></div>
         <button class="btn btn-primary" onclick="createTask()">Assign Task</button>
-        <div class="reply-saved" id="taskCreated">Task assigned to all mentees!</div>
+        <div class="reply-saved" id="taskCreated">Task assigned!</div>
       </div>
-      <div class="dash-card">
-        <h3>&#128203; All Tasks</h3>
-        <div id="adminTasksList"></div>
-        <p id="noAdminTasks" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No tasks yet.</p>
-      </div>
+      <div class="dash-card"><h3>📋 All Tasks</h3><div id="adminTasksList"></div><p id="noAdminTasks" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No tasks yet.</p></div>
     </div>
-    <div class="tab-content" id="tab-posts">
+
+    <!-- POSTS -->
+    <div class="tab-content" id="atab-posts">
       <div class="dash-card">
-        <h3>&#128221; Create Announcement</h3>
+        <h3>📝 Create Announcement</h3>
         <div class="form-group"><label>Title</label><input type="text" id="postTitle" placeholder="Announcement title"></div>
-        <div class="form-group"><label>Tag</label><select id="postTag"><option value="announcement">&#128227; Announcement</option><option value="update">&#9989; Update</option><option value="important">&#10071; Important</option></select></div>
-        <div class="form-group"><label>Message</label><textarea id="postBody" placeholder="Write your announcement..."></textarea></div>
+        <div class="form-group"><label>Tag</label><select id="postTag"><option value="announcement">📢 Announcement</option><option value="update">✅ Update</option><option value="important">❗ Important</option></select></div>
+        <div class="form-group"><label>Message</label><textarea id="postBody" placeholder="Write your announcement..." style="width:100%;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--bg);color:var(--text);resize:vertical;min-height:120px;"></textarea></div>
         <button class="btn btn-primary" onclick="createPost()">Publish Post</button>
         <div class="reply-saved" id="postCreated">Post published!</div>
       </div>
-      <div class="dash-card">
-        <h3>&#128226; All Posts</h3>
-        <div id="adminPostsList"></div>
-        <p id="noAdminPosts" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No posts yet.</p>
-      </div>
+      <div class="dash-card"><h3>📢 All Posts</h3><div id="adminPostsList"></div><p id="noAdminPosts" style="text-align:center;color:var(--text-light);padding:20px;display:none;">No posts yet.</p></div>
     </div>
-    <div class="tab-content" id="tab-questions">
+
+    <!-- QUESTIONS -->
+    <div class="tab-content" id="atab-questions">
       <div class="dash-card">
-        <h3>&#10067; Mentee Questions</h3>
-        <div class="feedback-list" id="allFeedbackList"></div>
+        <h3>❓ Mentee Questions</h3>
+        <div id="allFeedbackList"></div>
         <p id="noFeedback" style="text-align:center;color:var(--text-light);padding:30px;display:none;">No questions yet.</p>
       </div>
     </div>
-    <div class="tab-content" id="tab-settings">
+
+    <!-- SETTINGS -->
+    <div class="tab-content" id="atab-settings">
       <div class="dash-card">
-        <h3>&#9881; Account Settings</h3>
+        <h3>⚙️ Account Settings</h3>
         <div class="settings-form">
           <div class="settings-section">
             <h4>Admin Profile</h4>
-            <div class="form-group"><label>Username</label><input type="text" id="adminUsername" placeholder="Enter username"></div>
-            <div class="form-group"><label>Full Name</label><input type="text" id="adminName" placeholder="Enter your full name"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="adminEmail" placeholder="Enter your email"></div>
+            <div class="form-group"><label>Display Name</label><input type="text" id="adminName" placeholder="Your name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="adminEmailSettings" placeholder="Your email" disabled></div>
             <button class="btn btn-primary" onclick="updateAdminProfile()">Update Profile</button>
             <div class="reply-saved" id="profileUpdated">Profile updated!</div>
           </div>
           <div class="settings-section">
-            <h4>Change Admin Password</h4>
-            <div class="form-group"><label>Current Password</label><input type="password" id="currentPass" placeholder="Enter current password"></div>
-            <div class="form-group"><label>New Password</label><input type="password" id="newPass" placeholder="Enter new password"></div>
-            <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPass" placeholder="Confirm new password"></div>
+            <h4>Change Password</h4>
+            <div class="form-group"><label>New Password</label><input type="password" id="newPass" placeholder="At least 6 characters"></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPass" placeholder="Confirm new password"></div>
             <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
             <div class="reply-saved" id="passUpdated">Password updated!</div>
           </div>
           <div class="settings-section">
             <h4>Invite New Admin</h4>
-            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:15px;">Send an invitation link to make someone an admin.</p>
-            <div class="form-group"><label>Email Address</label><input type="email" id="inviteEmail" placeholder="Enter their Gmail address"></div>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:15px;">Send an invitation to make someone an admin.</p>
+            <div class="form-group"><label>Email Address</label><input type="email" id="inviteEmail" placeholder="Enter their email"></div>
             <button class="btn btn-primary" onclick="inviteAdmin()">Send Invitation</button>
-            <div class="reply-saved" id="inviteSent">Invitation link generated!</div>
+            <div class="reply-saved" id="inviteSent">Invitation sent!</div>
             <div id="inviteLinkBox" style="display:none;margin-top:15px;">
               <p style="font-size:0.85rem;font-weight:600;margin-bottom:8px;">Share this link:</p>
               <div style="display:flex;gap:8px;">
@@ -404,23 +446,782 @@
             </div>
             <div id="pendingInvites" style="margin-top:20px;"></div>
           </div>
-          <div class="settings-section">
-            <h4>Add New Mentee</h4>
-            <div class="form-group"><label>Username</label><input type="text" id="newMenteeUser" placeholder="Enter username"></div>
-            <div class="form-group"><label>Full Name</label><input type="text" id="newMenteeName" placeholder="Enter full name"></div>
-            <div class="form-group"><label>Password</label><input type="password" id="newMenteePass" placeholder="Enter password"></div>
-            <button class="btn btn-primary" onclick="addMentee()">Add Mentee</button>
-            <div class="reply-saved" id="menteeAdded">Mentee added!</div>
-          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
+  <!-- SCRIPTS -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
   <script src="js/main.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script>
+    // ===== STATE =====
+    let currentUser = null; // { id, email, name, picture, role }
+    let activeRole = 'mentee'; // 'mentee' or 'admin'
+    let realtimeChannels = [];
+
+    // ===== AUTH: SIGN IN WITH GOOGLE =====
+    async function signInWithGoogle() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/login.html' }
+      });
+      if (error) console.error('Google sign in error:', error);
+    }
+
+    // ===== AUTH: ADMIN LOGIN =====
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const pass = document.getElementById('adminPass').value;
+      const errEl = document.getElementById('adminError');
+
+      if (!email || !pass) { errEl.textContent = 'Fill in all fields.'; errEl.style.display = 'block'; return; }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) { errEl.textContent = error.message || 'Login failed.'; errEl.style.display = 'block'; return; }
+
+      errEl.style.display = 'none';
+      await loadUserProfile(data.user);
+    }
+
+    // ===== AUTH: SIGN OUT =====
+    async function signOut() {
+      await supabase.auth.signOut();
+      stopRealtime();
+      currentUser = null;
+      document.getElementById('loginWrapper').style.display = '';
+      document.getElementById('menteeDashboard').classList.remove('active');
+      document.getElementById('adminDashboard').classList.remove('active');
+      document.body.classList.add('login-page');
+      sessionStorage.removeItem('agapayUser');
+    }
+
+    // ===== AUTH: LOAD USER PROFILE =====
+    async function loadUserProfile(user) {
+      if (!user) return;
+
+      // Check if profile exists
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        currentUser = { id: user.id, email: user.email, name: profile.name, picture: profile.picture, role: profile.role };
+      } else {
+        // Create profile from Google metadata
+        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+        const picture = user.user_metadata?.avatar_url || null;
+
+        // Check if this is a known admin email
+        const isAdmin = await checkIsAdmin(user.email);
+
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .insert({ user_id: user.id, name, email: user.email, role: isAdmin ? 'admin' : 'mentee', picture })
+          .select()
+          .single();
+
+        currentUser = { id: user.id, email: user.email, name, picture, role: newProfile?.role || 'mentee' };
+      }
+
+      sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
+      showDashboard();
+    }
+
+    // ===== AUTH: CHECK IF ADMIN =====
+    async function checkIsAdmin(email) {
+      const { data } = await supabase.from('profiles').select('role').eq('email', email).eq('role', 'admin').single();
+      return !!data;
+    }
+
+    // ===== SHOW DASHBOARD =====
+    function showDashboard() {
+      if (!currentUser) return;
+      document.body.classList.remove('login-page');
+      document.getElementById('loginWrapper').style.display = 'none';
+
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminDashboard').classList.add('active');
+        document.getElementById('menteeDashboard').classList.remove('active');
+        document.getElementById('adminName').value = currentUser.name || '';
+        document.getElementById('adminEmailSettings').value = currentUser.email || '';
+        startRealtime();
+        renderAll();
+      } else {
+        document.getElementById('menteeDashboard').classList.add('active');
+        document.getElementById('adminDashboard').classList.remove('active');
+        document.getElementById('menteeName').textContent = currentUser.name;
+        startRealtime();
+        renderAll();
+      }
+    }
+
+    // ===== TAB SWITCHING =====
+    function showAdminTab(tab) {
+      document.querySelectorAll('#adminDashboard .admin-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector('#adminDashboard .admin-tab[data-tab="' + tab + '"]').classList.add('active');
+      document.getElementById('atab-' + tab).classList.add('active');
+    }
+
+    function showMenteeTab(tab) {
+      document.querySelectorAll('#menteeDashboard .admin-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#menteeDashboard .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector('#menteeDashboard .admin-tab[data-tab="' + tab + '"]').classList.add('active');
+      document.getElementById('mtab-' + tab).classList.add('active');
+    }
+
+    function switchRole(r) {
+      activeRole = r;
+      document.getElementById('btnMentee').classList.toggle('active', r === 'mentee');
+      document.getElementById('btnAdmin').classList.toggle('active', r === 'admin');
+      document.getElementById('menteeLogin').style.display = r === 'mentee' ? '' : 'none';
+      document.getElementById('adminLogin').style.display = r === 'admin' ? '' : 'none';
+    }
+
+    function toggleMobileMenu(wrapperId, tabsId) {
+      document.getElementById(wrapperId).classList.toggle('mobile-open');
+    }
+
+    // ===== HELPER: ESCAPE HTML =====
+    function esc(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ===== HELPER: FORMAT DATE =====
+    function fmtDate(d) {
+      return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function fmtDateTime(d) {
+      return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    // ===== REALTIME =====
+    function startRealtime() {
+      stopRealtime();
+      const tables = ['profiles', 'posts', 'comments', 'tasks', 'task_answers', 'feedback', 'sessions'];
+      tables.forEach(table => {
+        const ch = supabase
+          .channel('realtime-' + table)
+          .on('postgres_changes', { event: '*', schema: 'public', table }, () => renderAll())
+          .subscribe();
+        realtimeChannels.push(ch);
+      });
+    }
+
+    function stopRealtime() {
+      realtimeChannels.forEach(ch => supabase.removeChannel(ch));
+      realtimeChannels = [];
+    }
+
+    // ===== RENDER ALL =====
+    async function renderAll() {
+      if (currentUser?.role === 'admin') {
+        await renderMenteeList();
+        await renderSessionsList();
+        await renderAdminTasks();
+        await renderAdminPosts();
+        await renderAllFeedback();
+        updateAdminStats();
+      } else {
+        await renderMenteePosts();
+        await renderMenteeTasks();
+        await renderMyFeedback();
+        updateMenteeStats();
+      }
+    }
+
+    // ===== ADMIN: MENTEE LIST =====
+    async function renderMenteeList() {
+      const { data: profiles } = await supabase.from('profiles').select('*').eq('role', 'mentee').order('created_at', { ascending: false });
+      const el = document.getElementById('menteeList');
+      if (!profiles?.length) { el.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees yet.</p>'; document.getElementById('totalMentees').textContent = '0'; return; }
+      el.innerHTML = profiles.map(p => `
+        <div class="mentee-item">
+          <div class="mentee-info">
+            <div class="mentee-avatar">${p.picture ? '<img src="' + esc(p.picture) + '" style="width:45px;height:45px;border-radius:50%;">">' : esc(p.name.split(' ').map(n=>n[0]).join(''))}</div>
+            <div>
+              <div class="mentee-name">${esc(p.name)}</div>
+              <div class="mentee-email">${esc(p.email)}</div>
+              <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Joined: ${fmtDate(p.created_at)}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('totalMentees').textContent = profiles.length;
+
+      // Populate session mentee dropdown
+      const sel = document.getElementById('sessionMentee');
+      if (sel) sel.innerHTML = profiles.map(p => '<option value="' + esc(p.user_id) + '">' + esc(p.name) + '</option>').join('');
+    }
+
+    // ===== ADMIN: POSTS =====
+    async function renderAdminPosts() {
+      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+      const el = document.getElementById('adminPostsList');
+      const no = document.getElementById('noAdminPosts');
+      if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = await Promise.all(posts.map(async p => {
+        const { data: comments } = await supabase.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
+        const cm = comments || [];
+        return `
+        <div class="post-item">
+          <div class="post-header">
+            <span class="post-date">${fmtDate(p.created_at)}</span>
+            <div style="display:flex;gap:8px;">
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost('${p.id}')">✏️</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deletePost('${p.id}')">🗑️</button>
+            </div>
+          </div>
+          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${esc(p.tag.charAt(0).toUpperCase() + p.tag.slice(1))}</span>
+          <div class="post-title" id="post-title-${p.id}">${esc(p.title)}</div>
+          <div class="post-body" id="post-body-${p.id}">${esc(p.body)}</div>
+          <div id="post-edit-${p.id}" style="display:none;margin:15px 0;">
+            <input type="text" id="post-edit-title-${p.id}" value="${esc(p.title)}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+            <textarea id="post-edit-body-${p.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${esc(p.body)}</textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="savePost('${p.id}')">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost('${p.id}')">Cancel</button>
+            </div>
+          </div>
+          <div class="comments-section">
+            <div class="comments-header">💬 ${cm.length} Comment${cm.length !== 1 ? 's' : ''}</div>
+            ${cm.map(c => `
+              <div class="comment-item">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div class="comment-author">${esc(c.author)} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                  <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteComment('${c.id}')">🗑️</button>
+                </div>
+                <div class="comment-text">${esc(c.text)}</div>
+                <div class="comment-time">${fmtDateTime(c.created_at)}</div>
+              </div>
+            `).join('')}
+            <div class="comment-form">
+              <input type="text" id="adminComment-${p.id}" placeholder="Reply as admin...">
+              <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="addComment('${p.id}', 'admin')">Reply</button>
+            </div>
+          </div>
+        </div>`;
+      })).join('');
+    }
+
+    async function createPost() {
+      const title = document.getElementById('postTitle').value.trim();
+      const body = document.getElementById('postBody').value.trim();
+      const tag = document.getElementById('postTag').value;
+      if (!title || !body) { alert('Fill in all fields.'); return; }
+      await supabase.from('posts').insert({ title, body, tag, created_by: currentUser.name });
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postBody').value = '';
+      flash('postCreated');
+    }
+
+    function editPost(id) {
+      document.getElementById('post-title-' + id).style.display = 'none';
+      document.getElementById('post-body-' + id).style.display = 'none';
+      document.getElementById('post-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditPost(id) {
+      document.getElementById('post-title-' + id).style.display = '';
+      document.getElementById('post-body-' + id).style.display = '';
+      document.getElementById('post-edit-' + id).style.display = 'none';
+    }
+
+    async function savePost(id) {
+      const title = document.getElementById('post-edit-title-' + id).value.trim();
+      const body = document.getElementById('post-edit-body-' + id).value.trim();
+      if (!title || !body) { alert('Title and body required.'); return; }
+      await supabase.from('posts').update({ title, body }).eq('id', id);
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Delete this post and all comments?')) return;
+      await supabase.from('comments').delete().eq('post_id', id);
+      await supabase.from('posts').delete().eq('id', id);
+    }
+
+    // ===== COMMENTS =====
+    async function addComment(postId, role) {
+      const input = document.getElementById(role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId;
+      const text = input.value.trim();
+      if (!text) return;
+      await supabase.from('comments').insert({
+        post_id: postId,
+        author: currentUser.name,
+        user_id: currentUser.id,
+        role,
+        text
+      });
+      input.value = '';
+    }
+
+    async function deleteComment(id) {
+      if (!confirm('Delete this comment?')) return;
+      await supabase.from('comments').delete().eq('id', id);
+    }
+
+    // ===== MENTEE: POSTS =====
+    async function renderMenteePosts() {
+      const { data: posts } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+      const el = document.getElementById('menteePostsList');
+      const no = document.getElementById('noMenteePosts');
+      if (!posts?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = await Promise.all(posts.map(async p => {
+        const { data: comments } = await supabase.from('comments').select('*').eq('post_id', p.id).order('created_at', { ascending: true });
+        const cm = comments || [];
+        return `
+        <div class="post-item">
+          <div class="post-header"><span class="post-date">${fmtDate(p.created_at)}</span></div>
+          <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${esc(p.tag.charAt(0).toUpperCase() + p.tag.slice(1))}</span>
+          <div class="post-title">${esc(p.title)}</div>
+          <div class="post-body">${esc(p.body)}</div>
+          <div class="comments-section">
+            <div class="comments-header">💬 ${cm.length} Comment${cm.length !== 1 ? 's' : ''}</div>
+            ${cm.map(c => `
+              <div class="comment-item">
+                <div class="comment-author">${esc(c.author)} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
+                <div class="comment-text">${esc(c.text)}</div>
+                <div class="comment-time">${fmtDateTime(c.created_at)}</div>
+              </div>
+            `).join('')}
+            <div class="comment-form">
+              <input type="text" id="menteeComment-${p.id}" placeholder="Write a comment...">
+              <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="addComment('${p.id}', 'mentee')">Comment</button>
+            </div>
+          </div>
+        </div>`;
+      })).join('');
+    }
+
+    // ===== ADMIN: TASKS =====
+    async function createTask() {
+      const title = document.getElementById('taskTitle').value.trim();
+      const description = document.getElementById('taskDesc').value.trim();
+      const dDate = document.getElementById('taskDeadline').value;
+      const dTime = document.getElementById('taskDeadlineTime').value;
+      if (!title || !description || !dDate || !dTime) { alert('Fill in all fields.'); return; }
+      const deadline = dDate + 'T' + dTime;
+      await supabase.from('tasks').insert({ title, description, deadline });
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDesc').value = '';
+      document.getElementById('taskDeadline').value = '';
+      document.getElementById('taskDeadlineTime').value = '';
+      flash('taskCreated');
+    }
+
+    async function renderAdminTasks() {
+      const { data: tasks } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data: answers } = await supabase.from('task_answers').select('*');
+      const { data: mentees } = await supabase.from('profiles').select('*').eq('role', 'mentee');
+      const el = document.getElementById('adminTasksList');
+      const no = document.getElementById('noAdminTasks');
+      const menteeCount = mentees?.length || 0;
+      if (!tasks?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = tasks.map(t => {
+        const ta = (answers || []).filter(a => a.task_id === t.id);
+        return `
+        <div class="post-item">
+          <div class="post-header">
+            <span class="post-date">Due: ${fmtDateTime(t.deadline)}</span>
+            <div style="display:flex;gap:8px;">
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask('${t.id}')">✏️</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask('${t.id}')">🗑️</button>
+            </div>
+          </div>
+          <div class="post-title" id="task-title-${t.id}">${esc(t.title)}</div>
+          <div class="post-body" id="task-desc-${t.id}">${esc(t.description)}</div>
+          <div id="task-edit-${t.id}" style="display:none;margin:15px 0;">
+            <input type="text" id="task-edit-title-${t.id}" value="${esc(t.title)}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+            <textarea id="task-edit-desc-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${esc(t.description)}</textarea>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+              <input type="date" id="task-edit-date-${t.id}" value="${t.deadline ? t.deadline.split('T')[0] : ''}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
+              <input type="time" id="task-edit-time-${t.id}" value="${t.deadline ? t.deadline.split('T')[1] || '' : ''}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTask('${t.id}')">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTask('${t.id}')">Cancel</button>
+            </div>
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${fmtDate(t.created_at)} | ✅ Submissions: ${ta.length}/${menteeCount}</p>
+          ${ta.length ? '<div style="margin-top:15px;"><strong style="font-size:0.9rem;">Mentee Submissions:</strong>' + ta.map(a => '<div class="comment-item" style="margin-top:8px;"><div class="comment-author">' + esc(a.author) + '</div><div class="comment-text">' + esc(a.answer) + '</div><div class="comment-time">' + fmtDateTime(a.created_at) + '</div></div>').join('') + '</div>' : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;margin-top:10px;">No submissions yet.</p>'}
+        </div>`;
+      }).join('');
+    }
+
+    function editTask(id) {
+      document.getElementById('task-title-' + id).style.display = 'none';
+      document.getElementById('task-desc-' + id).style.display = 'none';
+      document.getElementById('task-edit-' + id).style.display = 'block';
+    }
+
+    function cancelEditTask(id) {
+      document.getElementById('task-title-' + id).style.display = '';
+      document.getElementById('task-desc-' + id).style.display = '';
+      document.getElementById('task-edit-' + id).style.display = 'none';
+    }
+
+    async function saveTask(id) {
+      const title = document.getElementById('task-edit-title-' + id).value.trim();
+      const desc = document.getElementById('task-edit-desc-' + id).value.trim();
+      const dDate = document.getElementById('task-edit-date-' + id).value;
+      const dTime = document.getElementById('task-edit-time-' + id).value;
+      if (!title || !desc || !dDate) { alert('All fields required.'); return; }
+      const deadline = dDate + (dTime ? 'T' + dTime : '');
+      await supabase.from('tasks').update({ title, description: desc, deadline }).eq('id', id);
+    }
+
+    async function deleteTask(id) {
+      if (!confirm('Delete this task and all submissions?')) return;
+      await supabase.from('task_answers').delete().eq('task_id', id);
+      await supabase.from('tasks').delete().eq('id', id);
+    }
+
+    // ===== MENTEE: TASKS =====
+    async function renderMenteeTasks() {
+      const { data: tasks } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data: answers } = await supabase.from('task_answers').select('*').eq('user_id', currentUser.id);
+      const el = document.getElementById('menteeTasksList');
+      const no = document.getElementById('noMenteeTasks');
+      if (!tasks?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = tasks.map(t => {
+        const myAnswer = (answers || []).find(a => a.task_id === t.id);
+        const isOverdue = new Date(t.deadline) < new Date();
+        return `
+        <div class="post-item">
+          <div class="post-header">
+            <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${fmtDateTime(t.deadline)}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
+          </div>
+          <div class="post-title">${esc(t.title)}</div>
+          <div class="post-body">${esc(t.description)}</div>
+          ${myAnswer ? `
+            <div class="reply-content" style="margin-top:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;">
+                  <strong>Your Answer:</strong>
+                  <div id="task-ans-text-${t.id}">${esc(myAnswer.answer)}</div>
+                  <div id="task-ans-edit-${t.id}" style="display:none;margin-top:8px;">
+                    <textarea id="task-ans-input-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${esc(myAnswer.answer)}</textarea>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                      <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTaskAnswer('${myAnswer.id}', '${t.id}')">Save</button>
+                      <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTaskAnswer('${t.id}')">Cancel</button>
+                    </div>
+                  </div>
+                  <div class="comment-time" style="margin-top:5px;">Submitted: ${fmtDateTime(myAnswer.created_at)}</div>
+                </div>
+                <div style="display:flex;gap:5px;margin-left:10px;">
+                  <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--gold);" onclick="editTaskAnswer('${t.id}')">✏️</button>
+                  <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:#ef4444;" onclick="deleteTaskAnswer('${myAnswer.id}')">🗑️</button>
+                </div>
+              </div>
+            </div>
+          ` : `
+            <div class="feedback-reply" style="margin-top:15px;">
+              <textarea id="taskAnswer-${t.id}" placeholder="Write your answer here..."></textarea>
+              <button class="btn btn-primary" onclick="submitTaskAnswer('${t.id}')">Submit Answer</button>
+            </div>
+          `}
+        </div>`;
+      }).join('');
+    }
+
+    async function submitTaskAnswer(taskId) {
+      const textarea = document.getElementById('taskAnswer-' + taskId);
+      const answer = textarea.value.trim();
+      if (!answer) { alert('Please write your answer.'); return; }
+      await supabase.from('task_answers').insert({
+        task_id: taskId,
+        user_id: currentUser.id,
+        author: currentUser.name,
+        answer
+      });
+    }
+
+    function editTaskAnswer(taskId) {
+      document.getElementById('task-ans-text-' + taskId).style.display = 'none';
+      document.getElementById('task-ans-edit-' + taskId).style.display = 'block';
+    }
+
+    function cancelEditTaskAnswer(taskId) {
+      document.getElementById('task-ans-text-' + taskId).style.display = '';
+      document.getElementById('task-ans-edit-' + taskId).style.display = 'none';
+    }
+
+    async function saveTaskAnswer(answerId, taskId) {
+      const answer = document.getElementById('task-ans-input-' + taskId).value.trim();
+      if (!answer) { alert('Answer cannot be empty.'); return; }
+      await supabase.from('task_answers').update({ answer }).eq('id', answerId);
+    }
+
+    async function deleteTaskAnswer(id) {
+      if (!confirm('Delete your answer?')) return;
+      await supabase.from('task_answers').delete().eq('id', id);
+    }
+
+    // ===== FEEDBACK =====
+    async function submitFeedback() {
+      const message = document.getElementById('menteeFeedback').value.trim();
+      if (!message) return;
+      await supabase.from('feedback').insert({
+        user_id: currentUser.id,
+        from_name: currentUser.name,
+        message,
+        status: 'pending'
+      });
+      document.getElementById('menteeFeedback').value = '';
+      flash('feedbackSent');
+    }
+
+    async function renderMyFeedback() {
+      const { data: fb } = await supabase.from('feedback').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      const el = document.getElementById('myFeedbackList');
+      const no = document.getElementById('noMyFeedback');
+      const visible = (fb || []).filter(f => !f.deleted_by_mentee);
+      if (!visible.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = visible.map(f => `
+        <div class="feedback-item">
+          <div class="feedback-header">
+            <span class="feedback-date">${fmtDate(f.created_at)}</span>
+          </div>
+          <div class="feedback-message">${esc(f.message)}</div>
+          ${f.reply ? '<div class="reply-content">' + esc(f.reply) + '</div>' : '<p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">⏳ Waiting for reply...</p>'}
+        </div>
+      `).join('');
+    }
+
+    async function renderAllFeedback() {
+      const { data: fb } = await supabase.from('feedback').select('*').order('created_at', { ascending: false });
+      const el = document.getElementById('allFeedbackList');
+      const no = document.getElementById('noFeedback');
+      if (!fb?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      el.innerHTML = fb.map(f => `
+        <div class="feedback-item" style="${f.deleted_by_mentee || f.deleted_by_admin ? 'opacity:0.5;' : ''}">
+          <div class="feedback-header">
+            <span class="feedback-from">${esc(f.from_name)} ${f.deleted_by_mentee ? '<span style="color:#ef4444;font-size:0.75rem;">(deleted by mentee)</span>' : ''}</span>
+            <span class="feedback-date">${fmtDate(f.created_at)}</span>
+          </div>
+          <div class="feedback-message">${esc(f.message)}</div>
+          ${f.reply ? `
+            <div class="reply-content" id="admin-reply-${f.id}">${esc(f.reply)}</div>
+            <div id="admin-reply-edit-${f.id}" style="display:none;margin:10px 0;">
+              <textarea id="admin-reply-input-${f.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${esc(f.reply)}</textarea>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminReply('${f.id}')">Save</button>
+                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminReply('${f.id}')">Cancel</button>
+              </div>
+            </div>
+            <div id="admin-reply-actions-${f.id}" style="display:flex;gap:6px;margin-top:6px;">
+              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editAdminReply('${f.id}')">✏️ Edit Reply</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminReply('${f.id}')">🗑️ Delete Reply</button>
+            </div>
+          ` : f.deleted_by_mentee || f.deleted_by_admin ? `
+            <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Question was deleted.</p>
+          ` : `
+            <div class="feedback-reply">
+              <textarea id="reply-${f.id}" placeholder="Write your reply..."></textarea>
+              <button class="btn btn-primary" onclick="sendReply('${f.id}')">Send Reply</button>
+              <div class="reply-saved" id="saved-${f.id}">Reply sent!</div>
+            </div>
+          `}
+        </div>
+      `).join('');
+
+      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply && !f.deleted_by_mentee && !f.deleted_by_admin).length;
+    }
+
+    async function sendReply(id) {
+      const text = document.getElementById('reply-' + id).value.trim();
+      if (!text) return;
+      await supabase.from('feedback').update({ reply: text, status: 'replied' }).eq('id', id);
+    }
+
+    function editAdminReply(id) {
+      document.getElementById('admin-reply-' + id).style.display = 'none';
+      document.getElementById('admin-reply-actions-' + id).style.display = 'none';
+      document.getElementById('admin-reply-edit-' + id).style.display = 'block';
+    }
+
+    function cancelAdminReply(id) {
+      document.getElementById('admin-reply-' + id).style.display = '';
+      document.getElementById('admin-reply-actions-' + id).style.display = 'flex';
+      document.getElementById('admin-reply-edit-' + id).style.display = 'none';
+    }
+
+    async function saveAdminReply(id) {
+      const reply = document.getElementById('admin-reply-input-' + id).value.trim();
+      if (!reply) { alert('Reply cannot be empty.'); return; }
+      await supabase.from('feedback').update({ reply }).eq('id', id);
+    }
+
+    async function deleteAdminReply(id) {
+      if (!confirm('Delete this reply?')) return;
+      await supabase.from('feedback').update({ reply: null, status: 'pending' }).eq('id', id);
+    }
+
+    // ===== SESSIONS =====
+    async function addSession() {
+      const user_id = document.getElementById('sessionMentee').value;
+      const title = document.getElementById('sessionTitle').value.trim();
+      const date = document.getElementById('sessionDate').value;
+      const status = document.getElementById('sessionStatus').value;
+      if (!user_id || !title || !date) { alert('Fill in all fields.'); return; }
+      await supabase.from('sessions').insert({ user_id, title, date, status });
+      document.getElementById('sessionTitle').value = '';
+      document.getElementById('sessionDate').value = '';
+      flash('sessionAdded');
+    }
+
+    async function renderSessionsList() {
+      const { data: sessions } = await supabase.from('sessions').select('*').order('created_at', { ascending: false });
+      const { data: mentees } = await supabase.from('profiles').select('*').eq('role', 'mentee');
+      const el = document.getElementById('sessionsList');
+      const no = document.getElementById('noSessions');
+      if (!sessions?.length) { el.innerHTML = ''; no.style.display = ''; return; }
+      no.style.display = 'none';
+
+      const nameMap = {};
+      (mentees || []).forEach(m => { nameMap[m.user_id] = m.name; });
+
+      el.innerHTML = sessions.map(s => `
+        <div class="mentee-item">
+          <div class="mentee-info">
+            <div class="mentee-avatar">${s.status === 'done' ? '✅' : '📅'}</div>
+            <div>
+              <div class="mentee-name">${esc(s.title)}</div>
+              <div class="mentee-email">${esc(nameMap[s.user_id] || 'Unknown')} • ${s.date}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="mentee-status ${s.status === 'done' ? 'status-active' : 'status-pending'}">${s.status === 'done' ? 'Done' : 'Upcoming'}</span>
+            <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;" onclick="toggleSession('${s.id}')">${s.status === 'done' ? 'Undo' : 'Done'}</button>
+            <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteSession('${s.id}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleSession(id) {
+      const { data: s } = await supabase.from('sessions').select('status').eq('id', id).single();
+      if (s) {
+        await supabase.from('sessions').update({ status: s.status === 'done' ? 'upcoming' : 'done' }).eq('id', id);
+      }
+    }
+
+    async function deleteSession(id) {
+      if (!confirm('Delete this session?')) return;
+      await supabase.from('sessions').delete().eq('id', id);
+    }
+
+    // ===== STATS =====
+    async function updateAdminStats() {
+      const { count: postCount } = await supabase.from('posts').select('*', { count: 'exact', head: true });
+      const { data: fb } = await supabase.from('feedback').select('reply, deleted_by_mentee, deleted_by_admin');
+      document.getElementById('totalPosts').textContent = postCount || 0;
+      document.getElementById('totalQuestions').textContent = (fb || []).filter(f => !f.reply && !f.deleted_by_mentee && !f.deleted_by_admin).length;
+    }
+
+    async function updateMenteeStats() {
+      if (!currentUser) return;
+      const { data: sessions } = await supabase.from('sessions').select('status').eq('user_id', currentUser.id);
+      const done = (sessions || []).filter(s => s.status === 'done').length;
+      const upcoming = (sessions || []).filter(s => s.status === 'upcoming').length;
+      const total = (sessions || []).length;
+      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('statDone').textContent = done;
+      document.getElementById('statUpcoming').textContent = upcoming;
+      document.getElementById('statProgress').textContent = progress + '%';
+    }
+
+    // ===== SETTINGS =====
+    async function updateAdminProfile() {
+      const name = document.getElementById('adminName').value.trim();
+      if (!name) { alert('Name is required.'); return; }
+      await supabase.from('profiles').update({ name }).eq('user_id', currentUser.id);
+      currentUser.name = name;
+      sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
+      flash('profileUpdated');
+    }
+
+    async function changePassword() {
+      const n = document.getElementById('newPass').value;
+      const cf = document.getElementById('confirmPass').value;
+      if (n.length < 6) { alert('Password must be at least 6 characters.'); return; }
+      if (n !== cf) { alert('Passwords do not match.'); return; }
+      const { error } = await supabase.auth.updateUser({ password: n });
+      if (error) { alert(error.message); return; }
+      document.getElementById('newPass').value = '';
+      document.getElementById('confirmPass').value = '';
+      flash('passUpdated');
+    }
+
+    async function inviteAdmin() {
+      const email = document.getElementById('inviteEmail').value.trim();
+      if (!email) { alert('Enter an email.'); return; }
+      const baseUrl = window.location.origin;
+      const link = baseUrl + '/admin-register.html?email=' + encodeURIComponent(email);
+
+      // Store invite in a simple table or just show the link
+      document.getElementById('inviteEmail').value = '';
+      document.getElementById('inviteLink').value = link;
+      document.getElementById('inviteLinkBox').style.display = 'block';
+
+      // Send via EmailJS
+      if (typeof emailjs !== 'undefined') {
+        emailjs.send('service_ov5dper', 'template_jvvpnp5', {
+          email, name: email.split('@')[0],
+          invitation_link: link, from_name: 'Agapay Mentorship'
+        }).then(() => {
+          flash('inviteSent');
+        }).catch(() => {
+          alert('Email failed. Link copied instead.');
+          navigator.clipboard.writeText(link);
+        });
+      } else {
+        flash('inviteSent');
+      }
+    }
+
+    function copyInviteLink() {
+      const input = document.getElementById('inviteLink');
+      input.select();
+      document.execCommand('copy');
+      alert('Link copied!');
+    }
+
+    // ===== FLASH MESSAGE =====
+    function flash(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+
+    // ===== INIT =====
+    (async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await loadUserProfile(session.user);
+      }
+    })();
+  </script>
 </body>
 </html>

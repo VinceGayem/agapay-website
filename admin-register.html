@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
   <title>Create Admin Account - Agapay Mentorship</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,21 +55,13 @@
       font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
     }
     [data-theme="dark"] .error-box { background: rgba(220,38,38,0.15); color: #f87171; }
-    .success-box {
-      background: #dcfce7; color: #16a34a; padding: 10px 15px; border-radius: 8px;
-      font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: left;
-    }
-    .expired-card { text-align: center; padding: 40px; }
+    .success-card h2 { color: #22c55e; margin-bottom: 15px; }
     .expired-card h2 { color: #ef4444; margin-bottom: 15px; }
     .expired-card p { color: var(--text-light); margin-bottom: 20px; }
     .login-back {
       display: inline-flex; align-items: center; gap: 6px;
-      color: rgba(255,255,255,0.7); font-size: 0.9rem; transition: var(--transition);
+      color: var(--gold); font-size: 0.9rem; font-weight: 600; margin-top: 20px;
     }
-    .login-back:hover { color: var(--gold); }
-    .password-match { font-size: 0.8rem; margin-top: 5px; }
-    .password-match.valid { color: #22c55e; }
-    .password-match.invalid { color: #ef4444; }
   </style>
 </head>
 <body>
@@ -83,23 +72,17 @@
       <p class="register-subtitle">You've been invited to become an Admin</p>
       <p class="register-email" id="inviteEmail"></p>
       <div class="error-box" id="regError"></div>
-      <div class="success-box" id="regSuccess"></div>
-      <div class="form-group">
-        <label>Choose a Username</label>
-        <input type="text" id="regUser" placeholder="Enter a username">
-      </div>
       <div class="form-group">
         <label>Full Name</label>
         <input type="text" id="regName" placeholder="Enter your full name">
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="regPass" placeholder="Create a password">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="Enter your email">
       </div>
       <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" id="regPassConfirm" placeholder="Confirm your password">
-        <div class="password-match" id="passMatch"></div>
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="At least 6 characters">
       </div>
       <button class="btn btn-primary" onclick="createAdminAccount()">Create Admin Account</button>
     </div>
@@ -107,66 +90,44 @@
     <div class="register-card expired-card" id="expiredCard" style="display:none;">
       <div class="register-icon">⚠️</div>
       <div class="register-logo"><span>A</span>gapay</div>
-      <h2>Invalid or Expired Link</h2>
+      <h2>Invalid Link</h2>
       <p>This invitation link is invalid or has already been used.</p>
       <a href="login.html" class="login-back">← Back to Login</a>
     </div>
 
-    <div class="register-card expired-card" id="successCard" style="display:none;">
+    <div class="register-card expired-card success-card" id="successCard" style="display:none;">
       <div class="register-icon">✅</div>
       <div class="register-logo"><span>A</span>gapay</div>
-      <h2 style="color:#22c55e;">Account Created!</h2>
+      <h2>Account Created!</h2>
       <p>You can now login as an admin.</p>
-      <a href="login.html" class="login-back" style="color:var(--gold);font-weight:600;">Go to Login →</a>
+      <a href="login.html" class="login-back">Go to Login →</a>
     </div>
 
     <a href="login.html" class="login-back">← Back to Login</a>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
     const email = params.get('email');
 
-    if (!token || !email) {
+    if (!email) {
       document.getElementById('registerForm').style.display = 'none';
       document.getElementById('expiredCard').style.display = 'block';
     } else {
       document.getElementById('inviteEmail').textContent = email;
+      document.getElementById('regEmail').value = email;
     }
 
-    document.getElementById('regPassConfirm').addEventListener('input', function() {
-      const pass = document.getElementById('regPass').value;
-      const confirm = this.value;
-      const el = document.getElementById('passMatch');
-      if (!confirm) { el.textContent = ''; return; }
-      if (pass === confirm) {
-        el.textContent = '✓ Passwords match';
-        el.className = 'password-match valid';
-      } else {
-        el.textContent = '✗ Passwords do not match';
-        el.className = 'password-match invalid';
-      }
-    });
-
     async function createAdminAccount() {
-      const user = document.getElementById('regUser').value.trim().toLowerCase();
       const name = document.getElementById('regName').value.trim();
+      const emailVal = document.getElementById('regEmail').value.trim();
       const pass = document.getElementById('regPass').value;
-      const confirm = document.getElementById('regPassConfirm').value;
       const errEl = document.getElementById('regError');
 
-      if (!user || !name || !pass || !confirm) {
+      if (!name || !emailVal || !pass) {
         errEl.textContent = 'Please fill in all fields.';
-        errEl.style.display = 'block';
-        return;
-      }
-
-      if (pass !== confirm) {
-        errEl.textContent = 'Passwords do not match.';
         errEl.style.display = 'block';
         return;
       }
@@ -177,25 +138,36 @@
         return;
       }
 
-      // Check if username is taken
-      const menteesSnap = await db.ref('agapay/mentees/' + user).once('value');
-      const adminSnap = await db.ref('agapay/admin').once('value');
-      const invitedSnap = await db.ref('agapay/adminInvitedUsers/' + user).once('value');
-
-      if (menteesSnap.exists() || invitedSnap.exists() || (adminSnap.val() && adminSnap.val().user === user)) {
-        errEl.textContent = 'Username already taken.';
+      // Check if profile already exists for this email
+      const { data: existing } = await supabase.from('profiles').select('id').eq('email', emailVal).single();
+      if (existing) {
+        errEl.textContent = 'An account with this email already exists.';
         errEl.style.display = 'block';
         return;
       }
 
-      // Save the new admin user
-      await db.ref('agapay/adminInvitedUsers/' + user).set({
-        user, password: pass, name, email,
-        created: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+      // Create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email: emailVal,
+        password: pass,
+        options: { data: { name, role: 'admin' } }
       });
 
-      // Update invite status
-      await db.ref('agapay/adminInvites/' + token + '/status').set('accepted');
+      if (error) {
+        errEl.textContent = error.message || 'Registration failed.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      // Create admin profile
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          user_id: data.user.id,
+          name,
+          email: emailVal,
+          role: 'admin'
+        });
+      }
 
       document.getElementById('registerForm').style.display = 'none';
       document.getElementById('successCard').style.display = 'block';
