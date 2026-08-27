@@ -379,7 +379,7 @@
 <body class="login-page">
 
   <!-- Mobile menu button -->
-  <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="toggleSidebar()">☰</button>
+  <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="toggleSidebar()" style="display:none;">☰</button>
 
   <!-- Mobile sidebar overlay -->
   <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
@@ -653,6 +653,8 @@
       document.getElementById('loginWrapper').style.display = '';
       document.getElementById('menteeDashboard').classList.remove('active');
       document.getElementById('adminDashboard').classList.remove('active');
+      document.getElementById('mobileMenuBtn').style.display = 'none';
+      closeSidebar();
       document.body.classList.add('login-page');
       sessionStorage.removeItem('agapayUser');
     }
@@ -734,12 +736,15 @@
         document.getElementById('menteeDashboard').classList.remove('active');
         document.getElementById('adminName').value = currentUser.name || '';
         document.getElementById('adminEmailSettings').value = currentUser.email || '';
+        document.getElementById('mobileMenuBtn').style.display = '';
+        updateSidebarForRole('admin');
         startRealtime();
         renderAll();
       } else {
         document.getElementById('menteeDashboard').classList.add('active');
         document.getElementById('adminDashboard').classList.remove('active');
         document.getElementById('menteeName').textContent = currentUser.name;
+        document.getElementById('mobileMenuBtn').style.display = '';
         startRealtime();
         renderAll();
       }
