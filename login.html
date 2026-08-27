@@ -263,7 +263,7 @@
     /* ===== LIST ITEMS ===== */
     .mentee-item, .post-item, .feedback-item {
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
-      padding: 18px; margin-bottom: 12px;
+      padding: 18px; margin-bottom: 12px; position: relative; overflow: visible;
     }
     .mentee-info { display: flex; align-items: center; gap: 14px; }
     .mentee-avatar {
@@ -386,8 +386,7 @@
     .reaction-picker-fb {
       display: none; position: absolute; bottom: calc(100% + 10px); right: 0;
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 40px;
-      padding: 8px 14px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 10;
-      white-space: nowrap;
+      padding: 8px 10px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 50;
     }
     .reaction-picker-fb.show {
       display: flex; gap: 2px;
@@ -486,6 +485,12 @@
       .comment-form { flex-direction: column; }
       .comment-form input { width: 100%; }
       .comment-form button { width: 100%; justify-content: center; }
+      .reaction-picker-fb {
+        right: -10px; border-radius: 20px; padding: 6px 8px;
+        max-width: calc(100vw - 80px); flex-wrap: wrap; justify-content: center;
+      }
+      .reaction-picker-fb span { font-size: 1.3rem; padding: 5px; }
+      .reaction-trigger { width: 30px; height: 30px; font-size: 1rem; }
       .feedback-header { flex-direction: column; align-items: flex-start; gap: 6px; }
       .feedback-header > div { flex-direction: row; gap: 6px; }
       .mentee-info { flex-wrap: wrap; }
