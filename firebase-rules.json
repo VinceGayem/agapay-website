@@ -3,7 +3,7 @@
     "agapay": {
       "admin": {
         ".read": true,
-        ".write": "auth != null || root.child('agapay/adminInvitedUsers').child(data.child('user').val()).exists()"
+        ".write": true
       },
       "mentees": {
         ".read": true,
