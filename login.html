@@ -472,7 +472,7 @@
       console.log('Starting Google sign in...');
       const { data, error } = await db.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/login.html' }
+        options: { redirectTo: window.location.origin + '/agapay-website/login.html' }
       });
       if (error) {
         console.error('Google sign in error:', error);
