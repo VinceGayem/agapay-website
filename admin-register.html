@@ -107,7 +107,12 @@
   </div>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js"></script>
+  <script>
+    const db = window.supabase.createClient(
+      'https://rvqyqymeidraplaereaw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cXlxeW1laWRyYXBsYWVyZWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTM5NjIsImV4cCI6MjEwMzM2OTk2Mn0.LW-1MlABe7qM8eZG5AmAbE2Wu7QJP-nmldwjZ4Aew_E'
+    );
+  </script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const email = params.get('email');
