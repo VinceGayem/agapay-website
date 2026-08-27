@@ -343,7 +343,7 @@
     }
 
     /* ===== REACTIONS (Facebook-style) ===== */
-    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; }
+    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; position: relative; }
     .reaction-btn {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
       border-radius: 20px; border: 1px solid var(--gray-200); background: var(--bg);
@@ -382,26 +382,27 @@
     .reaction-trigger:active { transform: scale(0.9); }
 
     .reaction-picker-fb {
-      display: none; position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+      display: none; position: absolute; bottom: calc(100% + 12px); left: 0;
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 40px;
-      padding: 8px 12px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 10;
+      padding: 8px 14px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 10;
+      white-space: nowrap;
     }
     .reaction-picker-fb.show {
       display: flex; gap: 2px;
       animation: fbPickerOpen 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
     }
     @keyframes fbPickerOpen {
-      0% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.5); }
-      50% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.08); }
-      70% { transform: translateX(-50%) translateY(2px) scale(0.97); }
-      100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+      0% { opacity: 0; transform: translateY(8px) scale(0.5); }
+      50% { opacity: 1; transform: translateY(-6px) scale(1.08); }
+      70% { transform: translateY(2px) scale(0.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     .reaction-picker-fb.hiding {
       animation: fbPickerClose 0.25s cubic-bezier(0.6,0.04,0.98,0.335) forwards;
     }
     @keyframes fbPickerClose {
-      0% { opacity: 1; transform: translateX(-50%) scale(1); }
-      100% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.5); }
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: translateY(8px) scale(0.5); }
     }
     .reaction-picker-fb span {
       font-size: 1.5rem; padding: 6px; border-radius: 50%; cursor: pointer;
