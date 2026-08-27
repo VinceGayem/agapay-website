@@ -652,6 +652,14 @@
         <h3>⚙️ Account Settings</h3>
         <div class="settings-form">
           <div class="settings-section">
+            <h4>Admin Profile</h4>
+            <div class="form-group"><label>Username</label><input type="text" id="adminUsername" placeholder="Enter username"></div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="adminName" placeholder="Enter your full name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="adminEmail" placeholder="Enter your email"></div>
+            <button class="btn btn-primary" onclick="updateAdminProfile()">Update Profile</button>
+            <div class="reply-saved" id="profileUpdated">Profile updated!</div>
+          </div>
+          <div class="settings-section">
             <h4>Change Admin Password</h4>
             <div class="form-group"><label>Current Password</label><input type="password" id="currentPass" placeholder="Enter current password"></div>
             <div class="form-group"><label>New Password</label><input type="password" id="newPass" placeholder="Enter new password"></div>
@@ -928,12 +936,20 @@
     function showAdminDashboard() {
       document.getElementById('loginWrapper').classList.add('hidden');
       document.getElementById('adminDashboard').classList.add('active');
+      loadAdminProfile();
       renderMenteeList();
       renderSessionsList();
       renderAdminTasks();
       renderAdminPosts();
       renderAllFeedback();
       updateStats();
+    }
+
+    function loadAdminProfile() {
+      const a = DB.admin || {};
+      document.getElementById('adminUsername').value = a.user || 'admin';
+      document.getElementById('adminName').value = a.name || 'Admin';
+      document.getElementById('adminEmail').value = a.email || '';
     }
 
     function logout() {
@@ -1680,6 +1696,43 @@
     }
 
     // ===== SETTINGS =====
+    async function updateAdminProfile() {
+      if (!Security.canSubmit('updateAdminProfile', 3000)) return alert('Please wait before updating again.');
+      const newUsername = Security.sanitizeInput(document.getElementById('adminUsername').value.trim().toLowerCase(), 30);
+      const newName = Security.sanitizeInput(document.getElementById('adminName').value.trim(), 100);
+      const newEmail = Security.sanitizeInput(document.getElementById('adminEmail').value.trim(), 100);
+
+      if (!newUsername || !newName) return alert('Username and name are required.');
+      if (!Security.isValidUsername(newUsername)) return alert('Username must be 3-30 characters, letters/numbers/underscores only.');
+      if (newEmail && !Security.isValidEmail(newEmail)) return alert('Please enter a valid email address.');
+
+      const a = DB.admin || {};
+      const oldUsername = a.user;
+
+      // Check if new username is taken by another user
+      if (newUsername !== oldUsername) {
+        const existing = await db.ref('agapay/mentees/' + newUsername).once('value');
+        const existingAdmin = await db.ref('agapay/admin/user').once('value');
+        if (existing.exists() || (existingAdmin.val() === newUsername && oldUsername !== newUsername)) {
+          return alert('Username already taken.');
+        }
+      }
+
+      // Update admin data
+      const updates = { user: newUsername, name: newName, email: newEmail };
+      await db.ref('agapay/admin').update(updates);
+
+      // Update session storage
+      const session = JSON.parse(sessionStorage.getItem('agapayUser'));
+      if (session) {
+        session.name = newName;
+        sessionStorage.setItem('agapayUser', JSON.stringify(session));
+      }
+
+      const el = document.getElementById('profileUpdated');
+      el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
+    }
+
     async function changePassword() {
       const c = document.getElementById('currentPass').value;
       const n = document.getElementById('newPass').value;
