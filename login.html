@@ -264,18 +264,11 @@
       <div class="login-logo"><span>A</span>gapay</div>
       <p class="login-subtitle">Admin Portal</p>
       <div class="error-box" id="adminError"></div>
-      <form class="login-form" id="adminForm" onsubmit="handleAdminLogin(event)">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="adminEmail" placeholder="Enter admin email" required>
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="adminPass" placeholder="Enter password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Sign In</button>
-      </form>
-      <div class="login-footer"><p>Don't have an account? <a href="contact.html">Contact your mentor</a></p></div>
+      <button class="google-btn" onclick="signInWithGoogle('admin')">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+      <div class="login-footer"><p>Only users with admin access can log in here.</p></div>
     </div>
   </div>
 
@@ -467,11 +460,15 @@
     let profileLoading = false;
 
     // ===== AUTH: SIGN IN WITH GOOGLE =====
-    async function signInWithGoogle() {
-      console.log('Starting Google sign in...');
+    async function signInWithGoogle(role) {
+      role = role || 'mentee';
+      console.log('Starting Google sign in, expected role:', role);
+      sessionStorage.setItem('agapayExpectedRole', role);
       const { data, error } = await db.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/agapay-website/login.html' }
+        options: {
+          redirectTo: window.location.origin + '/agapay-website/login.html'
+        }
       });
       if (error) {
         console.error('Google sign in error:', error);
@@ -479,22 +476,6 @@
       } else {
         console.log('Google sign in redirect:', data);
       }
-    }
-
-    // ===== AUTH: ADMIN LOGIN =====
-    async function handleAdminLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('adminEmail').value.trim();
-      const pass = document.getElementById('adminPass').value;
-      const errEl = document.getElementById('adminError');
-
-      if (!email || !pass) { errEl.textContent = 'Fill in all fields.'; errEl.style.display = 'block'; return; }
-
-      const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-      if (error) { errEl.textContent = error.message || 'Login failed.'; errEl.style.display = 'block'; return; }
-
-      errEl.style.display = 'none';
-      await loadUserProfile(data.user);
     }
 
     // ===== AUTH: SIGN OUT =====
@@ -513,7 +494,8 @@
     async function loadUserProfile(user) {
       if (!user || profileLoading) return;
       profileLoading = true;
-      console.log('Loading profile for:', user.id, user.email);
+      const expectedRole = sessionStorage.getItem('agapayExpectedRole') || 'mentee';
+      console.log('Loading profile for:', user.id, user.email, 'expected role:', expectedRole);
 
       try {
         const { data: profile, error: profileErr } = await db
@@ -526,6 +508,14 @@
 
         if (profile) {
           currentUser = { id: user.id, email: user.email, name: profile.name, picture: profile.picture, role: profile.role };
+
+          if (expectedRole === 'admin' && profile.role !== 'admin') {
+            alert('This account is not an admin. Please sign in as Mentee, or contact your mentor to get admin access.');
+            await db.auth.signOut();
+            profileLoading = false;
+            sessionStorage.removeItem('agapayExpectedRole');
+            return;
+          }
         } else {
           const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
           const picture = user.user_metadata?.avatar_url || null;
@@ -541,9 +531,18 @@
 
           console.log('New profile created:', newProfile, 'Error:', insertErr);
           currentUser = { id: user.id, email: user.email, name, picture, role: newProfile?.role || 'mentee' };
+
+          if (expectedRole === 'admin' && currentUser.role !== 'admin') {
+            alert('This account is not an admin. Please sign in as Mentee, or contact your mentor to get admin access.');
+            await db.auth.signOut();
+            profileLoading = false;
+            sessionStorage.removeItem('agapayExpectedRole');
+            return;
+          }
         }
 
         sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
+        sessionStorage.removeItem('agapayExpectedRole');
         showDashboard();
       } catch (e) {
         console.error('loadUserProfile error:', e);
