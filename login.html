@@ -516,7 +516,7 @@
       console.log('Loading profile for:', user.id, user.email);
 
       // Check if profile exists
-      const { data: profile, error: profileErr } = await supabase
+      const { data: profile, error: profileErr } = await db
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
@@ -536,7 +536,7 @@
 
         console.log('Creating new profile:', { name, email: user.email, role: isAdmin ? 'admin' : 'mentee' });
 
-        const { data: newProfile, error: insertErr } = await supabase
+        const { data: newProfile, error: insertErr } = await db
           .from('profiles')
           .insert({ user_id: user.id, name, email: user.email, role: isAdmin ? 'admin' : 'mentee', picture })
           .select()
@@ -627,7 +627,7 @@
       stopRealtime();
       const tables = ['profiles', 'posts', 'comments', 'tasks', 'task_answers', 'feedback', 'sessions'];
       tables.forEach(table => {
-        const ch = supabase
+        const ch = db
           .channel('realtime-' + table)
           .on('postgres_changes', { event: '*', schema: 'public', table }, () => renderAll())
           .subscribe();
