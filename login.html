@@ -683,46 +683,101 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/main.js"></script>
   <script>
-    // ===== DATA =====
-    function getData(k, f) { const d = localStorage.getItem('agapay_' + k); return d ? JSON.parse(d) : f; }
-    function setData(k, v) { localStorage.setItem('agapay_' + k, JSON.stringify(v)); }
+    // ===== FIREBASE REALTIME SYNC =====
+    // Local cache synced with Firebase in realtime
+    const DB = {
+      mentees: {}, admin: { user: 'admin', password: 'agapayadmin' },
+      feedback: {}, posts: {}, sessions: {}, tasks: {}, taskAnswers: {},
+      loggedUsers: {}, adminInvites: {}, adminInvitedUsers: {}
+    };
 
-    const defaultMentees = [];
-    const defaultAdmin = { user: 'admin', password: 'agapayadmin' };
+    // Convert Firebase object to array (sorted newest first by key)
+    function objToArr(obj) {
+      if (!obj) return [];
+      return Object.entries(obj).map(([k, v]) => ({ ...v, _key: k })).reverse();
+    }
 
-    if (!getData('mentees', null)) setData('mentees', defaultMentees);
-    if (!getData('admin', null)) setData('admin', defaultAdmin);
-    if (!getData('feedback', null)) setData('feedback', []);
-    if (!getData('posts', null)) setData('posts', []);
-    if (!getData('sessions', null)) setData('sessions', []);
-    if (!getData('tasks', null)) setData('tasks', []);
-    if (!getData('taskAnswers', null)) setData('taskAnswers', []);
-    if (!getData('loggedUsers', null)) setData('loggedUsers', []);
-    if (!getData('adminInvites', null)) setData('adminInvites', []);
-    if (!getData('adminInvitedUsers', null)) setData('adminInvitedUsers', []);
+    // Get data as array (for compatibility with existing code)
+    function getData(key) { return objToArr(DB[key]); }
+    function getDataObj(key) { return DB[key] || {}; }
+
+    // Set data to Firebase + local cache (handles both arrays and objects)
+    function setData(key, val) {
+      if (Array.isArray(val)) {
+        // Convert array to Firebase object using id as key
+        const obj = {};
+        val.forEach(item => { if (item && item.id) obj[item.id] = item; });
+        DB[key] = obj;
+        return db.ref('agapay/' + key).set(obj);
+      }
+      DB[key] = val;
+      return db.ref('agapay/' + key).set(val);
+    }
+
+    // Initialize Firebase defaults
+    async function initDefaults() {
+      const snap = await db.ref('agapay').once('value');
+      const data = snap.val() || {};
+      if (!data.mentees) await db.ref('agapay/mentees').set({});
+      if (!data.admin) await db.ref('agapay/admin').set(DB.admin);
+      if (!data.feedback) await db.ref('agapay/feedback').set({});
+      if (!data.posts) await db.ref('agapay/posts').set({});
+      if (!data.sessions) await db.ref('agapay/sessions').set({});
+      if (!data.tasks) await db.ref('agapay/tasks').set({});
+      if (!data.taskAnswers) await db.ref('agapay/taskAnswers').set({});
+      if (!data.loggedUsers) await db.ref('agapay/loggedUsers').set({});
+      if (!data.adminInvites) await db.ref('agapay/adminInvites').set({});
+      if (!data.adminInvitedUsers) await db.ref('agapay/adminInvitedUsers').set({});
+    }
+
+    // Setup realtime listeners
+    function setupListeners() {
+      const keys = ['mentees','admin','feedback','posts','sessions','tasks','taskAnswers','loggedUsers','adminInvites','adminInvitedUsers'];
+      keys.forEach(k => {
+        db.ref('agapay/' + k).on('value', snap => {
+          DB[k] = snap.val() || (k === 'admin' ? DB.admin : {});
+          // Re-render active views
+          if (document.getElementById('adminDashboard').classList.contains('active')) {
+            if (k === 'loggedUsers') renderMenteeList();
+            if (k === 'sessions') renderSessionsList();
+            if (k === 'tasks') renderAdminTasks();
+            if (k === 'posts') renderAdminPosts();
+            if (k === 'feedback') renderAllFeedback();
+            if (k === 'adminInvites') renderPendingInvites();
+            updateStats();
+          }
+          if (document.getElementById('menteeDashboard').classList.contains('active')) {
+            const u = JSON.parse(sessionStorage.getItem('agapayUser'));
+            if (u && u.role === 'mentee') {
+              if (k === 'posts') renderMenteePosts();
+              if (k === 'tasks') renderMenteeTasks();
+              if (k === 'feedback') renderMyFeedback();
+              if (k === 'sessions') updateMenteeStats(u.user);
+            }
+          }
+        });
+      });
+    }
+
+    initDefaults().then(setupListeners);
 
     // ===== EMAILJS INIT =====
     emailjs.init('ONzjMfvUFCoPoF5Ah');
 
     // ===== TRACK USERS =====
     function trackUser(user, name, email, picture) {
-      const users = getData('loggedUsers', []);
-      const existing = users.find(u => u.user === user);
-      if (existing) {
-        existing.lastLogin = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        existing.picture = picture || existing.picture;
-      } else {
-        users.unshift({
-          user, name, email: email || user + '@phinmaed.com',
-          picture: picture || null,
-          role: 'mentee',
-          registered: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }),
-          lastLogin: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-        });
-      }
-      setData('loggedUsers', users);
+      const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      const userData = {
+        user, name, email: email || user + '@phinmaed.com',
+        picture: picture || null, role: 'mentee',
+        registered: now, lastLogin: now
+      };
+      db.ref('agapay/loggedUsers/' + user).set(userData);
     }
 
     // ===== GOOGLE LOGIN =====
@@ -788,7 +843,8 @@
       e.preventDefault();
       const u = document.getElementById('menteeUser').value.trim().toLowerCase();
       const p = document.getElementById('menteePass').value;
-      const m = getData('mentees', []).find(m => m.user === u && m.password === p);
+      const menteesObj = getDataObj('mentees');
+      const m = Object.values(menteesObj).find(m => m.user === u && m.password === p);
       if (m) {
         document.getElementById('menteeError').style.display = 'none';
         trackUser(m.user, m.name, m.email);
@@ -804,9 +860,9 @@
       e.preventDefault();
       const u = document.getElementById('adminUser').value.trim().toLowerCase();
       const p = document.getElementById('adminPass').value;
-      const a = getData('admin', defaultAdmin);
-      const invitedAdmins = getData('adminInvitedUsers', []);
-      const invitedAdmin = invitedAdmins.find(a => a.user === u && a.password === p);
+      const a = DB.admin || { user: 'admin', password: 'agapayadmin' };
+      const invitedObj = getDataObj('adminInvitedUsers');
+      const invitedAdmin = Object.values(invitedObj).find(a => a.user === u && a.password === p);
 
       if ((u === a.user && p === a.password) || invitedAdmin) {
         document.getElementById('adminError').style.display = 'none';
@@ -887,66 +943,62 @@
     }
 
     // ===== ADMIN: POSTS =====
-    function createPost() {
+    async function createPost() {
       const title = document.getElementById('postTitle').value.trim();
       const body = document.getElementById('postBody').value.trim();
       const tag = document.getElementById('postTag').value;
       if (!title || !body) return alert('Please fill in all fields.');
-
-      const posts = getData('posts', []);
-      posts.unshift({
-        id: Date.now(), title, body, tag,
+      const id = Date.now();
+      await db.ref('agapay/posts/' + id).set({
+        id, title, body, tag,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        comments: []
+        comments: {}
       });
-      setData('posts', posts);
-
       document.getElementById('postTitle').value = '';
       document.getElementById('postBody').value = '';
       const el = document.getElementById('postCreated');
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 3000);
-
-      renderAdminPosts();
-      updateStats();
     }
 
     function renderAdminPosts() {
-      const posts = getData('posts', []);
+      const posts = getData('posts');
       const el = document.getElementById('adminPostsList');
       const no = document.getElementById('noAdminPosts');
 
       if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
 
-      el.innerHTML = posts.map(p => `
+      el.innerHTML = posts.map(p => {
+        const comments = p.comments ? objToArr(p.comments) : [];
+        return `
         <div class="post-item">
           <div class="post-header">
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="post-date">${p.date}</span>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost(${p.id})">✏️</button>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deletePost(${p.id})">🗑️</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editPost('${p._key}')">✏️</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deletePost('${p._key}')">🗑️</button>
             </div>
           </div>
           <span class="post-tag tag-${p.tag}">${p.tag === 'announcement' ? '📢' : p.tag === 'important' ? '❗' : '✅'} ${p.tag.charAt(0).toUpperCase() + p.tag.slice(1)}</span>
-          <div class="post-title" id="post-title-${p.id}">${p.title}</div>
-          <div class="post-body" id="post-body-${p.id}">${p.body}</div>
-          <div id="post-edit-${p.id}" style="display:none;margin:15px 0;">
-            <input type="text" id="post-edit-title-${p.id}" value="${p.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
-            <textarea id="post-edit-body-${p.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${p.body}</textarea>
+          <div class="post-title" id="post-title-${p._key}">${p.title}</div>
+          <div class="post-body" id="post-body-${p._key}">${p.body}</div>
+          <div id="post-edit-${p._key}" style="display:none;margin:15px 0;">
+            <input type="text" id="post-edit-title-${p._key}" value="${p.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+            <textarea id="post-edit-body-${p._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${p.body}</textarea>
             <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="savePost(${p.id})">Save</button>
-              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost(${p.id})">Cancel</button>
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="savePost('${p._key}')">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditPost('${p._key}')">Cancel</button>
             </div>
           </div>
           <div class="comments-section">
-            <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
-            ${p.comments.map((c, ci) => `
+            <div class="comments-header">💬 ${comments.length} Comment${comments.length !== 1 ? 's' : ''}</div>
+            ${comments.map((c, ci) => `
               <div class="comment-item">
                 <div class="comment-content">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
-                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminComment(${p.id}, ${ci})">🗑️</button>
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminComment('${p._key}', '${c._key}')">🗑️</button>
                   </div>
                   <div class="comment-text">${c.text}</div>
                   <div class="comment-time">${c.time}</div>
@@ -954,89 +1006,61 @@
               </div>
             `).join('')}
             <div class="comment-form">
-              <input type="text" id="adminComment-${p.id}" placeholder="Write a comment as admin...">
-              <button class="btn btn-primary" onclick="addComment(${p.id}, 'admin')">Reply</button>
+              <input type="text" id="adminComment-${p._key}" placeholder="Write a comment as admin...">
+              <button class="btn btn-primary" onclick="addComment('${p._key}', 'admin')">Reply</button>
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
-    function editPost(id) {
-      document.getElementById('post-title-' + id).style.display = 'none';
-      document.getElementById('post-body-' + id).style.display = 'none';
-      document.getElementById('post-edit-' + id).style.display = 'block';
+    function editPost(key) {
+      document.getElementById('post-title-' + key).style.display = 'none';
+      document.getElementById('post-body-' + key).style.display = 'none';
+      document.getElementById('post-edit-' + key).style.display = 'block';
     }
 
-    function cancelEditPost(id) {
-      const posts = getData('posts', []);
-      const p = posts.find(x => x.id === id);
-      document.getElementById('post-edit-title-' + id).value = p.title;
-      document.getElementById('post-edit-body-' + id).value = p.body;
-      document.getElementById('post-title-' + id).style.display = 'block';
-      document.getElementById('post-body-' + id).style.display = 'block';
-      document.getElementById('post-edit-' + id).style.display = 'none';
+    function cancelEditPost(key) {
+      const p = DB.posts[key];
+      document.getElementById('post-edit-title-' + key).value = p.title;
+      document.getElementById('post-edit-body-' + key).value = p.body;
+      document.getElementById('post-title-' + key).style.display = 'block';
+      document.getElementById('post-body-' + key).style.display = 'block';
+      document.getElementById('post-edit-' + key).style.display = 'none';
     }
 
-    function savePost(id) {
-      const newTitle = document.getElementById('post-edit-title-' + id).value.trim();
-      const newBody = document.getElementById('post-edit-body-' + id).value.trim();
+    function savePost(key) {
+      const newTitle = document.getElementById('post-edit-title-' + key).value.trim();
+      const newBody = document.getElementById('post-edit-body-' + key).value.trim();
       if (!newTitle || !newBody) return alert('Title and body cannot be empty.');
-      const posts = getData('posts', []);
-      const p = posts.find(x => x.id === id);
-      if (p) {
-        p.title = newTitle;
-        p.body = newBody;
-        setData('posts', posts);
-        renderAdminPosts();
-      }
+      db.ref('agapay/posts/' + key).update({ title: newTitle, body: newBody });
     }
 
-    function deletePost(id) {
+    function deletePost(key) {
       if (!confirm('Delete this post and all comments?')) return;
-      let posts = getData('posts', []);
-      posts = posts.filter(x => x.id !== id);
-      setData('posts', posts);
-      renderAdminPosts();
+      db.ref('agapay/posts/' + key).remove();
     }
 
-    function deleteAdminComment(postId, commentIndex) {
+    function deleteAdminComment(postKey, commentKey) {
       if (!confirm('Delete this comment?')) return;
-      const posts = getData('posts', []);
-      const post = posts.find(p => p.id === postId);
-      if (post) {
-        post.comments.splice(commentIndex, 1);
-        setData('posts', posts);
-        renderAdminPosts();
-      }
+      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).remove();
     }
 
-    function addComment(postId, role) {
-      const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId);
+    async function addComment(postKey, role) {
+      const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postKey);
       const text = input.value.trim();
       if (!text) return;
-
-      const posts = getData('posts', []);
-      const post = posts.find(p => p.id === postId);
-      if (!post) return;
-
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      post.comments.push({
-        author: user.name,
-        user: user.user,
-        role: role,
-        text: text,
+      const commentKey = db.ref('agapay/posts/' + postKey + '/comments').push().key;
+      await db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).set({
+        author: user.name, user: user.user, role, text,
         time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       });
-      setData('posts', posts);
       input.value = '';
-
-      if (role === 'admin') renderAdminPosts();
-      else renderMenteePosts();
     }
 
     function renderMenteePosts() {
-      const posts = getData('posts', []);
+      const posts = getData('posts');
       const el = document.getElementById('menteePostsList');
       const no = document.getElementById('noMenteePosts');
       const currentUser = JSON.parse(sessionStorage.getItem('agapayUser'));
@@ -1044,7 +1068,9 @@
       if (!posts.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
 
-      el.innerHTML = posts.map(p => `
+      el.innerHTML = posts.map(p => {
+        const comments = p.comments ? objToArr(p.comments) : [];
+        return `
         <div class="post-item">
           <div class="post-header">
             <span class="post-date">${p.date}</span>
@@ -1053,25 +1079,25 @@
           <div class="post-title">${p.title}</div>
           <div class="post-body">${p.body}</div>
           <div class="comments-section">
-            <div class="comments-header">💬 ${p.comments.length} Comment${p.comments.length !== 1 ? 's' : ''}</div>
-            ${p.comments.map((c, ci) => `
+            <div class="comments-header">💬 ${comments.length} Comment${comments.length !== 1 ? 's' : ''}</div>
+            ${comments.map((c, ci) => `
               <div class="comment-item">
                 <div class="comment-content">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div class="comment-author">${c.author} ${c.role === 'admin' ? '<span style="color:var(--gold);font-size:0.75rem;">(Admin)</span>' : ''}</div>
                     ${c.user === currentUser.user && c.role !== 'admin' ? `
                       <div style="display:flex;gap:5px;">
-                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editComment(${p.id}, ${ci})">✏️</button>
-                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteComment(${p.id}, ${ci})">🗑️</button>
+                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editComment('${p._key}', '${c._key}')">✏️</button>
+                        <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteComment('${p._key}', '${c._key}')">🗑️</button>
                       </div>
                     ` : ''}
                   </div>
-                  <div class="comment-text" id="cmt-text-${p.id}-${ci}">${c.text}</div>
-                  <div id="cmt-edit-${p.id}-${ci}" style="display:none;margin-top:5px;">
-                    <input type="text" id="cmt-input-${p.id}-${ci}" value="${c.text}" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text);">
+                  <div class="comment-text" id="cmt-text-${p._key}-${c._key}">${c.text}</div>
+                  <div id="cmt-edit-${p._key}-${c._key}" style="display:none;margin-top:5px;">
+                    <input type="text" id="cmt-input-${p._key}-${c._key}" value="${c.text}" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:6px;font-size:0.85rem;background:var(--card-bg);color:var(--text);">
                     <div style="display:flex;gap:5px;margin-top:5px;">
-                      <button style="padding:4px 10px;border-radius:6px;border:none;background:var(--gold);color:var(--navy);font-size:0.75rem;font-weight:600;cursor:pointer;" onclick="saveComment(${p.id}, ${ci})">Save</button>
-                      <button style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:var(--card-bg);color:var(--text);font-size:0.75rem;cursor:pointer;" onclick="cancelEditComment(${p.id}, ${ci})">Cancel</button>
+                      <button style="padding:4px 10px;border-radius:6px;border:none;background:var(--gold);color:var(--navy);font-size:0.75rem;font-weight:600;cursor:pointer;" onclick="saveComment('${p._key}', '${c._key}')">Save</button>
+                      <button style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:var(--card-bg);color:var(--text);font-size:0.75rem;cursor:pointer;" onclick="cancelEditComment('${p._key}', '${c._key}')">Cancel</button>
                     </div>
                   </div>
                   <div class="comment-time">${c.time}</div>
@@ -1079,48 +1105,35 @@
               </div>
             `).join('')}
             <div class="comment-form">
-              <input type="text" id="menteeComment-${p.id}" placeholder="Write a comment...">
-              <button class="btn btn-primary" onclick="addComment(${p.id}, 'mentee')">Comment</button>
+              <input type="text" id="menteeComment-${p._key}" placeholder="Write a comment...">
+              <button class="btn btn-primary" onclick="addComment('${p._key}', 'mentee')">Comment</button>
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
-    function editComment(postId, commentIndex) {
-      document.getElementById(`cmt-text-${postId}-${commentIndex}`).style.display = 'none';
-      document.getElementById(`cmt-edit-${postId}-${commentIndex}`).style.display = 'block';
+    function editComment(postKey, commentKey) {
+      document.getElementById(`cmt-text-${postKey}-${commentKey}`).style.display = 'none';
+      document.getElementById(`cmt-edit-${postKey}-${commentKey}`).style.display = 'block';
     }
 
-    function cancelEditComment(postId, commentIndex) {
-      const posts = getData('posts', []);
-      const post = posts.find(p => p.id === postId);
-      document.getElementById(`cmt-input-${postId}-${commentIndex}`).value = post.comments[commentIndex].text;
-      document.getElementById(`cmt-text-${postId}-${commentIndex}`).style.display = 'block';
-      document.getElementById(`cmt-edit-${postId}-${commentIndex}`).style.display = 'none';
+    function cancelEditComment(postKey, commentKey) {
+      const c = DB.posts[postKey]?.comments?.[commentKey];
+      document.getElementById(`cmt-input-${postKey}-${commentKey}`).value = c.text;
+      document.getElementById(`cmt-text-${postKey}-${commentKey}`).style.display = 'block';
+      document.getElementById(`cmt-edit-${postKey}-${commentKey}`).style.display = 'none';
     }
 
-    function saveComment(postId, commentIndex) {
-      const newText = document.getElementById(`cmt-input-${postId}-${commentIndex}`).value.trim();
+    function saveComment(postKey, commentKey) {
+      const newText = document.getElementById(`cmt-input-${postKey}-${commentKey}`).value.trim();
       if (!newText) return;
-      const posts = getData('posts', []);
-      const post = posts.find(p => p.id === postId);
-      if (post && post.comments[commentIndex]) {
-        post.comments[commentIndex].text = newText;
-        setData('posts', posts);
-        renderMenteePosts();
-      }
+      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey + '/text').set(newText);
     }
 
-    function deleteComment(postId, commentIndex) {
+    function deleteComment(postKey, commentKey) {
       if (!confirm('Delete this comment?')) return;
-      const posts = getData('posts', []);
-      const post = posts.find(p => p.id === postId);
-      if (post) {
-        post.comments.splice(commentIndex, 1);
-        setData('posts', posts);
-        renderMenteePosts();
-      }
+      db.ref('agapay/posts/' + postKey + '/comments/' + commentKey).remove();
     }
 
     // ===== FEEDBACK / QUESTIONS =====
@@ -1128,24 +1141,22 @@
       const text = document.getElementById('menteeFeedback').value.trim();
       if (!text) return;
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const fb = getData('feedback', []);
-      fb.unshift({
-        id: Date.now(), from: user.name, user: user.user, message: text,
+      const id = Date.now();
+      db.ref('agapay/feedback/' + id).set({
+        id, from: user.name, user: user.user, message: text,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         reply: null
       });
-      setData('feedback', fb);
       document.getElementById('menteeFeedback').value = '';
       const el = document.getElementById('feedbackSent');
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 3000);
-      renderMyFeedback();
-      updateStats();
     }
 
     function renderMyFeedback() {
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const fb = getData('feedback', []).filter(f => f.user === user.user && !f.deletedByMentee && !f.deletedByAdmin);
+      const allFb = getData('feedback');
+      const fb = allFb.filter(f => f.user === user.user && !f.deletedByMentee && !f.deletedByAdmin);
       const el = document.getElementById('myFeedbackList');
       const no = document.getElementById('noMyFeedback');
 
@@ -1153,22 +1164,22 @@
       no.style.display = 'none';
 
       el.innerHTML = fb.map(f => `
-        <div class="feedback-item" id="fb-item-${f.id}">
+        <div class="feedback-item" id="fb-item-${f._key}">
           <div class="feedback-header">
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="feedback-date">${f.date}</span>
               ${!f.reply ? `
-                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;" onclick="editFeedback(${f.id})">✏️ Edit</button>
-                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteFeedback(${f.id})">🗑️</button>
+                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;" onclick="editFeedback('${f._key}')">✏️ Edit</button>
+                <button class="dash-logout" style="padding:4px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteFeedback('${f._key}')">🗑️</button>
               ` : ''}
             </div>
           </div>
-          <div class="feedback-message" id="fb-msg-${f.id}">${f.message}</div>
-          <div id="fb-edit-${f.id}" style="display:none;">
-            <textarea id="fb-edit-input-${f.id}" style="width:100%;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${f.message}</textarea>
+          <div class="feedback-message" id="fb-msg-${f._key}">${f.message}</div>
+          <div id="fb-edit-${f._key}" style="display:none;">
+            <textarea id="fb-edit-input-${f._key}" style="width:100%;padding:12px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${f.message}</textarea>
             <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="saveFeedback(${f.id})">Save</button>
-              <button class="dash-logout" style="padding:8px 16px;font-size:0.8rem;" onclick="cancelEditFeedback(${f.id})">Cancel</button>
+              <button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;" onclick="saveFeedback('${f._key}')">Save</button>
+              <button class="dash-logout" style="padding:8px 16px;font-size:0.8rem;" onclick="cancelEditFeedback('${f._key}')">Cancel</button>
             </div>
           </div>
           ${f.reply ? `
@@ -1178,51 +1189,41 @@
       `).join('');
     }
 
-    function editFeedback(id) {
-      document.getElementById('fb-msg-' + id).style.display = 'none';
-      document.getElementById('fb-edit-' + id).style.display = 'block';
+    function editFeedback(key) {
+      document.getElementById('fb-msg-' + key).style.display = 'none';
+      document.getElementById('fb-edit-' + key).style.display = 'block';
     }
 
-    function cancelEditFeedback(id) {
-      const fb = getData('feedback', []).find(f => f.id === id);
-      document.getElementById('fb-edit-input-' + id).value = fb.message;
-      document.getElementById('fb-msg-' + id).style.display = 'block';
-      document.getElementById('fb-edit-' + id).style.display = 'none';
+    function cancelEditFeedback(key) {
+      const f = DB.feedback[key];
+      document.getElementById('fb-edit-input-' + key).value = f.message;
+      document.getElementById('fb-msg-' + key).style.display = 'block';
+      document.getElementById('fb-edit-' + key).style.display = 'none';
     }
 
-    function saveFeedback(id) {
-      const newMsg = document.getElementById('fb-edit-input-' + id).value.trim();
+    function saveFeedback(key) {
+      const newMsg = document.getElementById('fb-edit-input-' + key).value.trim();
       if (!newMsg) return alert('Message cannot be empty.');
-      const fb = getData('feedback', []);
-      const item = fb.find(f => f.id === id);
-      if (item) {
-        item.message = newMsg;
-        setData('feedback', fb);
-        renderMyFeedback();
-      }
+      db.ref('agapay/feedback/' + key + '/message').set(newMsg);
     }
 
-    function deleteFeedback(id) {
+    function deleteFeedback(key) {
       if (!confirm('Delete this question?')) return;
-      const fb = getData('feedback', []);
-      const item = fb.find(f => f.id === id);
-      if (item) {
-        item.deletedByMentee = true;
-        item.deletedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        setData('feedback', fb);
-        renderMyFeedback();
-      }
+      db.ref('agapay/feedback/' + key).update({
+        deletedByMentee: true,
+        deletedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      });
     }
 
     function renderAllFeedback() {
-      const fb = getData('feedback', []);
+      const allFb = getData('feedback');
       const el = document.getElementById('allFeedbackList');
       const no = document.getElementById('noFeedback');
 
-      if (!fb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
+      if (!allFb.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
 
-      el.innerHTML = fb.map(f => `
+      el.innerHTML = allFb.map(f => `
         <div class="feedback-item" style="${f.deletedByMentee || f.deletedByAdmin ? 'opacity:0.7;border-left:3px solid #ef4444;' : ''}">
           <div class="feedback-header">
             <span class="feedback-from">
@@ -1233,130 +1234,106 @@
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="feedback-date">${f.date}${f.deletedByMentee ? ' • Removed: ' + f.deletedAt : ''}${f.deletedByAdmin ? ' • Removed: ' + f.deletedAt : ''}</span>
               ${!f.deletedByAdmin && !f.deletedByMentee ? `
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="adminEditFeedback(${f.id})">✏️</button>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="adminDeleteFeedback(${f.id})">🗑️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="adminEditFeedback('${f._key}')">✏️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="adminDeleteFeedback('${f._key}')">🗑️</button>
               ` : ''}
             </div>
           </div>
-          <div class="feedback-message" id="admin-fb-msg-${f.id}">${f.message}</div>
-          <div id="admin-fb-edit-${f.id}" style="display:none;margin:10px 0;">
-            <textarea id="admin-fb-edit-input-${f.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.message}</textarea>
+          <div class="feedback-message" id="admin-fb-msg-${f._key}">${f.message}</div>
+          <div id="admin-fb-edit-${f._key}" style="display:none;margin:10px 0;">
+            <textarea id="admin-fb-edit-input-${f._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.message}</textarea>
             <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminFeedback(${f.id})">Save</button>
-              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminFeedback(${f.id})">Cancel</button>
+              <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminFeedback('${f._key}')">Save</button>
+              <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminFeedback('${f._key}')">Cancel</button>
             </div>
           </div>
           ${f.reply ? `
-            <div class="reply-content" id="admin-reply-${f.id}">${f.reply}</div>
-            <div id="admin-reply-edit-${f.id}" style="display:none;margin:10px 0;">
-              <textarea id="admin-reply-edit-input-${f.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.reply}</textarea>
+            <div class="reply-content" id="admin-reply-${f._key}">${f.reply}</div>
+            <div id="admin-reply-edit-${f._key}" style="display:none;margin:10px 0;">
+              <textarea id="admin-reply-edit-input-${f._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${f.reply}</textarea>
               <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminReply(${f.id})">Save</button>
-                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminReply(${f.id})">Cancel</button>
+                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveAdminReply('${f._key}')">Save</button>
+                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelAdminReply('${f._key}')">Cancel</button>
               </div>
             </div>
-            <div style="display:flex;gap:6px;margin-top:6px;" id="admin-reply-actions-${f.id}">
-              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editAdminReply(${f.id})">✏️ Edit Reply</button>
-              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminReply(${f.id})">🗑️ Delete Reply</button>
+            <div style="display:flex;gap:6px;margin-top:6px;" id="admin-reply-actions-${f._key}">
+              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--gold);" onclick="editAdminReply('${f._key}')">✏️ Edit Reply</button>
+              <button style="background:none;border:none;cursor:pointer;font-size:0.8rem;color:#ef4444;" onclick="deleteAdminReply('${f._key}')">🗑️ Delete Reply</button>
             </div>
           ` : f.deletedByMentee || f.deletedByAdmin ? `
             <p style="font-size:0.85rem;color:var(--text-light);font-style:italic;">Question was deleted.</p>
           ` : `
             <div class="feedback-reply">
-              <textarea id="reply-${f.id}" placeholder="Write your reply..."></textarea>
-              <button class="btn btn-primary" onclick="sendReply(${f.id})">Send Reply</button>
-              <div class="reply-saved" id="saved-${f.id}">Reply sent!</div>
+              <textarea id="reply-${f._key}" placeholder="Write your reply..."></textarea>
+              <button class="btn btn-primary" onclick="sendReply('${f._key}')">Send Reply</button>
+              <div class="reply-saved" id="saved-${f._key}">Reply sent!</div>
             </div>
           `}
         </div>
       `).join('');
 
-      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply && !f.deletedByMentee && !f.deletedByAdmin).length;
+      document.getElementById('totalQuestions').textContent = allFb.filter(f => !f.reply && !f.deletedByMentee && !f.deletedByAdmin).length;
     }
 
-    function adminEditFeedback(id) {
-      document.getElementById('admin-fb-msg-' + id).style.display = 'none';
-      document.getElementById('admin-fb-edit-' + id).style.display = 'block';
+    function adminEditFeedback(key) {
+      document.getElementById('admin-fb-msg-' + key).style.display = 'none';
+      document.getElementById('admin-fb-edit-' + key).style.display = 'block';
     }
 
-    function cancelAdminFeedback(id) {
-      const fb = getData('feedback', []);
-      const f = fb.find(x => x.id === id);
-      document.getElementById('admin-fb-edit-input-' + id).value = f.message;
-      document.getElementById('admin-fb-msg-' + id).style.display = 'block';
-      document.getElementById('admin-fb-edit-' + id).style.display = 'none';
+    function cancelAdminFeedback(key) {
+      const f = DB.feedback[key];
+      document.getElementById('admin-fb-edit-input-' + key).value = f.message;
+      document.getElementById('admin-fb-msg-' + key).style.display = 'block';
+      document.getElementById('admin-fb-edit-' + key).style.display = 'none';
     }
 
-    function saveAdminFeedback(id) {
-      const newMsg = document.getElementById('admin-fb-edit-input-' + id).value.trim();
+    function saveAdminFeedback(key) {
+      const newMsg = document.getElementById('admin-fb-edit-input-' + key).value.trim();
       if (!newMsg) return alert('Message cannot be empty.');
-      const fb = getData('feedback', []);
-      const f = fb.find(x => x.id === id);
-      if (f) {
-        f.message = newMsg;
-        setData('feedback', fb);
-        renderAllFeedback();
-      }
+      db.ref('agapay/feedback/' + key + '/message').set(newMsg);
     }
 
-    function adminDeleteFeedback(id) {
+    function adminDeleteFeedback(key) {
       if (!confirm('Delete this question?')) return;
-      const fb = getData('feedback', []);
-      const f = fb.find(x => x.id === id);
-      if (f) {
-        f.deletedByAdmin = true;
-        f.deletedAt = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        setData('feedback', fb);
-        renderAllFeedback();
-      }
+      db.ref('agapay/feedback/' + key).update({
+        deletedByAdmin: true,
+        deletedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      });
     }
 
-    function sendReply(id) {
-      const text = document.getElementById('reply-' + id).value.trim();
+    function sendReply(key) {
+      const text = document.getElementById('reply-' + key).value.trim();
       if (!text) return;
-      const fb = getData('feedback', []);
-      const item = fb.find(f => f.id === id);
-      if (item) { item.reply = text; setData('feedback', fb); renderAllFeedback(); }
+      db.ref('agapay/feedback/' + key + '/reply').set(text);
     }
 
-    function editAdminReply(id) {
-      document.getElementById('admin-reply-' + id).style.display = 'none';
-      document.getElementById('admin-reply-actions-' + id).style.display = 'none';
-      document.getElementById('admin-reply-edit-' + id).style.display = 'block';
+    function editAdminReply(key) {
+      document.getElementById('admin-reply-' + key).style.display = 'none';
+      document.getElementById('admin-reply-actions-' + key).style.display = 'none';
+      document.getElementById('admin-reply-edit-' + key).style.display = 'block';
     }
 
-    function cancelAdminReply(id) {
-      document.getElementById('admin-reply-edit-' + id).style.display = 'none';
-      document.getElementById('admin-reply-' + id).style.display = 'block';
-      document.getElementById('admin-reply-actions-' + id).style.display = 'flex';
+    function cancelAdminReply(key) {
+      document.getElementById('admin-reply-edit-' + key).style.display = 'none';
+      document.getElementById('admin-reply-' + key).style.display = 'block';
+      document.getElementById('admin-reply-actions-' + key).style.display = 'flex';
     }
 
-    function saveAdminReply(id) {
-      const newReply = document.getElementById('admin-reply-edit-input-' + id).value.trim();
+    function saveAdminReply(key) {
+      const newReply = document.getElementById('admin-reply-edit-input-' + key).value.trim();
       if (!newReply) return alert('Reply cannot be empty.');
-      const fb = getData('feedback', []);
-      const f = fb.find(x => x.id === id);
-      if (f) {
-        f.reply = newReply;
-        setData('feedback', fb);
-        renderAllFeedback();
-      }
+      db.ref('agapay/feedback/' + key + '/reply').set(newReply);
     }
 
-    function deleteAdminReply(id) {
+    function deleteAdminReply(key) {
       if (!confirm('Delete this reply?')) return;
-      const fb = getData('feedback', []);
-      const f = fb.find(x => x.id === id);
-      if (f) {
-        f.reply = '';
-        setData('feedback', fb);
-        renderAllFeedback();
-      }
+      db.ref('agapay/feedback/' + key + '/reply').set('');
     }
 
     // ===== MENTEE LIST =====
     function renderMenteeList() {
-      const loggedUsers = getData('loggedUsers', []);
+      const loggedUsersObj = getDataObj('loggedUsers');
+      const loggedUsers = Object.values(loggedUsersObj);
 
       document.getElementById('menteeList').innerHTML = loggedUsers.length ? loggedUsers.map(u => `
         <div class="mentee-item">
@@ -1374,7 +1351,6 @@
 
       document.getElementById('totalMentees').textContent = loggedUsers.length;
 
-      // Populate session mentee dropdown
       const sel = document.getElementById('sessionMentee');
       if (sel) {
         sel.innerHTML = loggedUsers.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
@@ -1388,27 +1364,23 @@
       const date = document.getElementById('sessionDate').value;
       const status = document.getElementById('sessionStatus').value;
       if (!user || !title || !date) return alert('Please fill in all fields.');
-
-      const sessions = getData('sessions', []);
-      sessions.unshift({
-        id: Date.now(), user, title, date, status,
+      const id = Date.now();
+      db.ref('agapay/sessions/' + id).set({
+        id, user, title, date, status,
         dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       });
-      setData('sessions', sessions);
-
       document.getElementById('sessionTitle').value = '';
       document.getElementById('sessionDate').value = '';
       const el = document.getElementById('sessionAdded');
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-
-      renderSessionsList();
     }
 
     function renderSessionsList() {
-      const sessions = getData('sessions', []);
+      const sessions = getData('sessions');
       const el = document.getElementById('sessionsList');
       const no = document.getElementById('noSessions');
-      const mentees = getData('mentees', []);
+      const menteesObj = getDataObj('mentees');
+      const mentees = Object.values(menteesObj);
 
       if (!sessions.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
@@ -1426,46 +1398,39 @@
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="mentee-status ${s.status === 'done' ? 'status-active' : 'status-pending'}">${s.status === 'done' ? 'Done' : 'Upcoming'}</span>
-              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;" onclick="toggleSession(${s.id})">${s.status === 'done' ? 'Undo' : 'Done'}</button>
-              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteSession(${s.id})">✕</button>
+              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;" onclick="toggleSession('${s._key}')">${s.status === 'done' ? 'Undo' : 'Done'}</button>
+              <button class="dash-logout" style="padding:5px 10px;font-size:0.75rem;border-color:#dc2626;color:#dc2626;" onclick="deleteSession('${s._key}')">✕</button>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function toggleSession(id) {
-      const sessions = getData('sessions', []);
-      const s = sessions.find(x => x.id === id);
+    function toggleSession(key) {
+      const s = DB.sessions[key];
       if (s) {
-        s.status = s.status === 'done' ? 'upcoming' : 'done';
-        setData('sessions', sessions);
-        renderSessionsList();
+        db.ref('agapay/sessions/' + key + '/status').set(s.status === 'done' ? 'upcoming' : 'done');
       }
     }
 
-    function deleteSession(id) {
+    function deleteSession(key) {
       if (!confirm('Delete this session?')) return;
-      let sessions = getData('sessions', []);
-      sessions = sessions.filter(x => x.id !== id);
-      setData('sessions', sessions);
-      renderSessionsList();
+      db.ref('agapay/sessions/' + key).remove();
     }
 
     function updateMenteeStats(user) {
-      const sessions = getData('sessions', []).filter(s => s.user === user);
+      const sessions = getData('sessions').filter(s => s.user === user);
       const done = sessions.filter(s => s.status === 'done').length;
       const upcoming = sessions.filter(s => s.status === 'upcoming').length;
       const total = sessions.length;
       const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-
       document.getElementById('statDone').textContent = done;
       document.getElementById('statUpcoming').textContent = upcoming;
       document.getElementById('statProgress').textContent = progress + '%';
     }
 
     // ===== TASKS =====
-    function createTask() {
+    async function createTask() {
       const title = document.getElementById('taskTitle').value.trim();
       const desc = document.getElementById('taskDesc').value.trim();
       const deadlineDate = document.getElementById('taskDeadline').value;
@@ -1475,12 +1440,11 @@
       const deadline = deadlineDate + 'T' + deadlineTime;
       const deadlineFormatted = new Date(deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-      const tasks = getData('tasks', []);
-      tasks.unshift({
-        id: Date.now(), title, desc, deadline, deadlineFormatted,
+      const id = Date.now();
+      await db.ref('agapay/tasks/' + id).set({
+        id, title, desc, deadline, deadlineFormatted,
         dateCreated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       });
-      setData('tasks', tasks);
 
       document.getElementById('taskTitle').value = '';
       document.getElementById('taskDesc').value = '';
@@ -1488,17 +1452,16 @@
       document.getElementById('taskDeadlineTime').value = '';
       const el = document.getElementById('taskCreated');
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-
-      renderAdminTasks();
-      updateStats();
     }
 
     function renderAdminTasks() {
-      const tasks = getData('tasks', []);
-      const answers = getData('taskAnswers', []);
+      const tasks = getData('tasks');
+      const taskAnswersObj = getDataObj('taskAnswers');
+      const answers = Object.values(taskAnswersObj);
       const el = document.getElementById('adminTasksList');
       const no = document.getElementById('noAdminTasks');
-      const loggedUsers = getData('loggedUsers', []);
+      const loggedUsersObj = getDataObj('loggedUsers');
+      const loggedUsersCount = Object.keys(loggedUsersObj).length;
 
       if (!tasks.length) { el.innerHTML = ''; no.style.display = 'block'; return; }
       no.style.display = 'none';
@@ -1511,25 +1474,25 @@
             <div class="post-header">
               <div style="display:flex;gap:8px;align-items:center;">
                 <span class="post-date">Due: ${new Date(t.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask(${t.id})">✏️</button>
-                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask(${t.id})">🗑️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask('${t._key}')">✏️</button>
+                <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask('${t._key}')">🗑️</button>
               </div>
             </div>
-            <div class="post-title" id="task-title-${t.id}">${t.title}</div>
-            <div class="post-body" id="task-desc-${t.id}">${t.desc}</div>
-            <div id="task-edit-${t.id}" style="display:none;margin:15px 0;">
-              <input type="text" id="task-edit-title-${t.id}" value="${t.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
-              <textarea id="task-edit-desc-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${t.desc}</textarea>
+            <div class="post-title" id="task-title-${t._key}">${t.title}</div>
+            <div class="post-body" id="task-desc-${t._key}">${t.desc}</div>
+            <div id="task-edit-${t._key}" style="display:none;margin:15px 0;">
+              <input type="text" id="task-edit-title-${t._key}" value="${t.title}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.95rem;font-family:inherit;background:var(--card-bg);color:var(--text);margin-bottom:8px;">
+              <textarea id="task-edit-desc-${t._key}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:60px;">${t.desc}</textarea>
               <div style="display:flex;gap:10px;margin-top:8px;">
-                <input type="date" id="task-edit-deadline-${t.id}" value="${t.deadline.split('T')[0]}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
-                <input type="time" id="task-edit-deadline-time-${t.id}" value="${t.deadline.split('T')[1] || ''}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
+                <input type="date" id="task-edit-deadline-${t._key}" value="${t.deadline.split('T')[0]}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
+                <input type="time" id="task-edit-deadline-time-${t._key}" value="${t.deadline.split('T')[1] || ''}" style="flex:1;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;background:var(--card-bg);color:var(--text);">
               </div>
               <div style="display:flex;gap:8px;margin-top:8px;">
-                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTask(${t.id})">Save</button>
-                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTask(${t.id})">Cancel</button>
+                <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTask('${t._key}')">Save</button>
+                <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTask('${t._key}')">Cancel</button>
               </div>
             </div>
-            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${loggedUsers.length}</p>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">📅 Created: ${t.dateCreated} | ✅ Submissions: ${submitted}/${loggedUsersCount}</p>
             ${taskAnswers.length ? `
               <div style="margin-top:15px;">
                 <strong style="font-size:0.9rem;">Mentee Submissions:</strong>
@@ -1549,54 +1512,46 @@
       }).join('');
     }
 
-    function editTask(id) {
-      document.getElementById('task-title-' + id).style.display = 'none';
-      document.getElementById('task-desc-' + id).style.display = 'none';
-      document.getElementById('task-edit-' + id).style.display = 'block';
+    function editTask(key) {
+      document.getElementById('task-title-' + key).style.display = 'none';
+      document.getElementById('task-desc-' + key).style.display = 'none';
+      document.getElementById('task-edit-' + key).style.display = 'block';
     }
 
-    function cancelEditTask(id) {
-      const tasks = getData('tasks', []);
-      const t = tasks.find(x => x.id === id);
-      document.getElementById('task-edit-title-' + id).value = t.title;
-      document.getElementById('task-edit-desc-' + id).value = t.desc;
-      document.getElementById('task-edit-deadline-' + id).value = t.deadline;
-      document.getElementById('task-title-' + id).style.display = 'block';
-      document.getElementById('task-desc-' + id).style.display = 'block';
-      document.getElementById('task-edit-' + id).style.display = 'none';
+    function cancelEditTask(key) {
+      const t = DB.tasks[key];
+      document.getElementById('task-edit-title-' + key).value = t.title;
+      document.getElementById('task-edit-desc-' + key).value = t.desc;
+      document.getElementById('task-edit-deadline-' + key).value = t.deadline;
+      document.getElementById('task-title-' + key).style.display = 'block';
+      document.getElementById('task-desc-' + key).style.display = 'block';
+      document.getElementById('task-edit-' + key).style.display = 'none';
     }
 
-    function saveTask(id) {
-      const newTitle = document.getElementById('task-edit-title-' + id).value.trim();
-      const newDesc = document.getElementById('task-edit-desc-' + id).value.trim();
-      const newDeadline = document.getElementById('task-edit-deadline-' + id).value;
+    function saveTask(key) {
+      const newTitle = document.getElementById('task-edit-title-' + key).value.trim();
+      const newDesc = document.getElementById('task-edit-desc-' + key).value.trim();
+      const newDeadline = document.getElementById('task-edit-deadline-' + key).value;
       if (!newTitle || !newDesc || !newDeadline) return alert('All fields are required.');
-      const tasks = getData('tasks', []);
-      const t = tasks.find(x => x.id === id);
-      if (t) {
-        t.title = newTitle;
-        t.desc = newDesc;
-        t.deadline = newDeadline;
-        setData('tasks', tasks);
-        renderAdminTasks();
-      }
+      const deadlineFormatted = new Date(newDeadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      db.ref('agapay/tasks/' + key).update({ title: newTitle, desc: newDesc, deadline: newDeadline, deadlineFormatted });
     }
 
-    function deleteTask(id) {
+    async function deleteTask(key) {
       if (!confirm('Delete this task and all submissions?')) return;
-      let tasks = getData('tasks', []);
-      let answers = getData('taskAnswers', []);
-      tasks = tasks.filter(x => x.id !== id);
-      answers = answers.filter(x => x.taskId !== id);
-      setData('tasks', tasks);
-      setData('taskAnswers', answers);
-      renderAdminTasks();
+      await db.ref('agapay/tasks/' + key).remove();
+      const answers = getData('taskAnswers');
+      const taskAnswers = answers.filter(a => a.taskId === DB.tasks[key]?.id);
+      for (const a of taskAnswers) {
+        await db.ref('agapay/taskAnswers/' + a._key).remove();
+      }
     }
 
     function renderMenteeTasks() {
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const tasks = getData('tasks', []);
-      const answers = getData('taskAnswers', []);
+      const tasks = getData('tasks');
+      const taskAnswersObj = getDataObj('taskAnswers');
+      const answers = Object.values(taskAnswersObj);
       const el = document.getElementById('menteeTasksList');
       const no = document.getElementById('noMenteeTasks');
 
@@ -1622,15 +1577,15 @@
                     <div id="task-ans-edit-${t.id}" style="display:none;margin-top:8px;">
                       <textarea id="task-ans-input-${t.id}" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;font-size:0.9rem;font-family:inherit;background:var(--card-bg);color:var(--text);resize:vertical;min-height:80px;">${myAnswer.answer}</textarea>
                       <div style="display:flex;gap:8px;margin-top:8px;">
-                        <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTaskAnswer(${t.id})">Save</button>
-                        <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTaskAnswer(${t.id})">Cancel</button>
+                        <button class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;" onclick="saveTaskAnswer('${t.id}', '${myAnswer._key}')">Save</button>
+                        <button class="dash-logout" style="padding:6px 14px;font-size:0.8rem;" onclick="cancelEditTaskAnswer('${t.id}', '${myAnswer._key}')">Cancel</button>
                       </div>
                     </div>
                     <div class="comment-time" style="margin-top:5px;">Submitted: ${myAnswer.time}</div>
                   </div>
                   <div style="display:flex;gap:5px;margin-left:10px;">
                     <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--gold);" onclick="editTaskAnswer(${t.id})">✏️</button>
-                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:#ef4444;" onclick="deleteTaskAnswer(${t.id})">🗑️</button>
+                    <button style="background:none;border:none;cursor:pointer;font-size:0.9rem;color:#ef4444;" onclick="deleteTaskAnswer('${myAnswer._key}')">🗑️</button>
                   </div>
                 </div>
               </div>
@@ -1650,36 +1605,23 @@
       document.getElementById(`task-ans-edit-${taskId}`).style.display = 'block';
     }
 
-    function cancelEditTaskAnswer(taskId) {
-      const answers = getData('taskAnswers', []);
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const myAnswer = answers.find(a => a.taskId === taskId && a.user === user.user);
-      document.getElementById(`task-ans-input-${taskId}`).value = myAnswer.answer;
+    function cancelEditTaskAnswer(taskId, answerKey) {
+      const a = DB.taskAnswers[answerKey];
+      document.getElementById(`task-ans-input-${taskId}`).value = a.answer;
       document.getElementById(`task-ans-text-${taskId}`).style.display = 'block';
       document.getElementById(`task-ans-edit-${taskId}`).style.display = 'none';
     }
 
-    function saveTaskAnswer(taskId) {
+    function saveTaskAnswer(taskId, answerKey) {
       const newAnswer = document.getElementById(`task-ans-input-${taskId}`).value.trim();
       if (!newAnswer) return alert('Answer cannot be empty.');
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const answers = getData('taskAnswers', []);
-      const myAnswer = answers.find(a => a.taskId === taskId && a.user === user.user);
-      if (myAnswer) {
-        myAnswer.answer = newAnswer;
-        myAnswer.time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (edited)';
-        setData('taskAnswers', answers);
-        renderMenteeTasks();
-      }
+      const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (edited)';
+      db.ref('agapay/taskAnswers/' + answerKey).update({ answer: newAnswer, time });
     }
 
-    function deleteTaskAnswer(taskId) {
+    function deleteTaskAnswer(answerKey) {
       if (!confirm('Delete your answer?')) return;
-      const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      let answers = getData('taskAnswers', []);
-      answers = answers.filter(a => !(a.taskId === taskId && a.user === user.user));
-      setData('taskAnswers', answers);
-      renderMenteeTasks();
+      db.ref('agapay/taskAnswers/' + answerKey).remove();
     }
 
     function submitTaskAnswer(taskId) {
@@ -1688,33 +1630,24 @@
       if (!answer) return alert('Please write your answer.');
 
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
-      const answers = getData('taskAnswers', []);
-
-      // Remove existing answer for this task by this user (allow re-submit)
-      const filtered = answers.filter(a => !(a.taskId === taskId && a.user === user.user));
-
-      filtered.unshift({
-        id: Date.now(),
-        taskId,
-        user: user.user,
-        author: user.name,
-        answer,
+      const id = Date.now();
+      db.ref('agapay/taskAnswers/' + id).set({
+        id, taskId,
+        user: user.user, author: user.name, answer,
         time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       });
-      setData('taskAnswers', filtered);
-      renderMenteeTasks();
     }
 
     // ===== SETTINGS =====
-    function changePassword() {
+    async function changePassword() {
       const c = document.getElementById('currentPass').value;
       const n = document.getElementById('newPass').value;
       const cf = document.getElementById('confirmPass').value;
-      const a = getData('admin', defaultAdmin);
+      const a = DB.admin || { user: 'admin', password: 'agapayadmin' };
       if (c !== a.password) return alert('Current password incorrect.');
       if (n !== cf) return alert('Passwords do not match.');
       if (n.length < 6) return alert('Password must be at least 6 characters.');
-      a.password = n; setData('admin', a);
+      await db.ref('agapay/admin/password').set(n);
       document.getElementById('currentPass').value = '';
       document.getElementById('newPass').value = '';
       document.getElementById('confirmPass').value = '';
@@ -1722,25 +1655,25 @@
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
     }
 
-    function addMentee() {
+    async function addMentee() {
       const u = document.getElementById('newMenteeUser').value.trim().toLowerCase();
       const n = document.getElementById('newMenteeName').value.trim();
       const p = document.getElementById('newMenteePass').value;
       if (!u || !n || !p) return alert('Fill in all fields.');
-      const ms = getData('mentees', []);
-      if (ms.find(m => m.user === u)) return alert('Username exists.');
-      ms.push({ user: u, password: p, name: n, email: u + '@phinmaed.com' });
-      setData('mentees', ms);
+      const menteesObj = getDataObj('mentees');
+      if (Object.values(menteesObj).find(m => m.user === u)) return alert('Username exists.');
+      await db.ref('agapay/mentees/' + u).set({
+        user: u, password: p, name: n, email: u + '@phinmaed.com'
+      });
       document.getElementById('newMenteeUser').value = '';
       document.getElementById('newMenteeName').value = '';
       document.getElementById('newMenteePass').value = '';
       const el = document.getElementById('menteeAdded');
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
-      renderMenteeList();
     }
 
     // ===== INVITE ADMIN =====
-    function inviteAdmin() {
+    async function inviteAdmin() {
       const email = document.getElementById('inviteEmail').value.trim();
       if (!email || !email.includes('@')) return alert('Enter a valid email address.');
 
@@ -1748,25 +1681,19 @@
       const baseUrl = window.location.origin + window.location.pathname.replace('login.html', '');
       const link = baseUrl + 'admin-register.html?token=' + token + '&email=' + encodeURIComponent(email);
 
-      const invites = getData('adminInvites', []);
-      invites.push({
-        email: email,
-        token: token,
+      await db.ref('agapay/adminInvites/' + token).set({
+        email, token,
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
         status: 'pending'
       });
-      setData('adminInvites', invites);
 
       document.getElementById('inviteEmail').value = '';
       document.getElementById('inviteLink').value = link;
       document.getElementById('inviteLinkBox').style.display = 'block';
 
-      // Send email via EmailJS
       emailjs.send('service_ov5dper', 'template_jvvpnp5', {
-        email: email,
-        name: email.split('@')[0],
-        invitation_link: link,
-        from_name: 'Agapay Mentorship'
+        email, name: email.split('@')[0],
+        invitation_link: link, from_name: 'Agapay Mentorship'
       }).then(() => {
         const el = document.getElementById('inviteSent');
         el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000);
@@ -1775,8 +1702,6 @@
         alert('Email sending failed. Link copied instead. You can share it manually.');
         navigator.clipboard.writeText(link);
       });
-
-      renderPendingInvites();
     }
 
     function copyInviteLink() {
@@ -1787,7 +1712,8 @@
     }
 
     function renderPendingInvites() {
-      const invites = getData('adminInvites', []);
+      const invitesObj = getDataObj('adminInvites');
+      const invites = Object.values(invitesObj);
       const el = document.getElementById('pendingInvites');
       if (!invites.length) { el.innerHTML = ''; return; }
 
@@ -1805,17 +1731,14 @@
 
     function cancelInvite(token) {
       if (!confirm('Cancel this invitation?')) return;
-      let invites = getData('adminInvites', []);
-      invites = invites.filter(i => i.token !== token);
-      setData('adminInvites', invites);
-      renderPendingInvites();
+      db.ref('agapay/adminInvites/' + token).remove();
     }
 
     function updateStats() {
-      const fb = getData('feedback', []);
-      const posts = getData('posts', []);
+      const feedback = getData('feedback');
+      const posts = getData('posts');
       document.getElementById('totalPosts').textContent = posts.length;
-      document.getElementById('totalQuestions').textContent = fb.filter(f => !f.reply).length;
+      document.getElementById('totalQuestions').textContent = feedback.filter(f => !f.reply).length;
     }
 
     // ===== SESSION CHECK =====

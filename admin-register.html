@@ -120,6 +120,9 @@
     <a href="login.html" class="login-back">← Back to Login</a>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
@@ -146,7 +149,7 @@
       }
     });
 
-    function createAdminAccount() {
+    async function createAdminAccount() {
       const user = document.getElementById('regUser').value.trim().toLowerCase();
       const name = document.getElementById('regName').value.trim();
       const pass = document.getElementById('regPass').value;
@@ -171,30 +174,25 @@
         return;
       }
 
-      const admins = JSON.parse(localStorage.getItem('agapay_adminInvitedUsers') || '[]');
-      const defaultAdmin = JSON.parse(localStorage.getItem('agapay_admin') || '{}');
+      // Check if username is taken
+      const menteesSnap = await db.ref('agapay/mentees/' + user).once('value');
+      const adminSnap = await db.ref('agapay/admin').once('value');
+      const invitedSnap = await db.ref('agapay/adminInvitedUsers/' + user).once('value');
 
-      if (admins.find(a => a.user === user) || (defaultAdmin.user === user)) {
+      if (menteesSnap.exists() || invitedSnap.exists() || (adminSnap.val() && adminSnap.val().user === user)) {
         errEl.textContent = 'Username already taken.';
         errEl.style.display = 'block';
         return;
       }
 
-      admins.push({
-        user: user,
-        password: pass,
-        name: name,
-        email: email,
+      // Save the new admin user
+      await db.ref('agapay/adminInvitedUsers/' + user).set({
+        user, password: pass, name, email,
         created: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
       });
-      localStorage.setItem('agapay_adminInvitedUsers', JSON.stringify(admins));
 
-      const invites = JSON.parse(localStorage.getItem('agapay_adminInvites') || '[]');
-      const invite = invites.find(i => i.token === token);
-      if (invite) {
-        invite.status = 'accepted';
-        localStorage.setItem('agapay_adminInvites', JSON.stringify(invites));
-      }
+      // Update invite status
+      await db.ref('agapay/adminInvites/' + token + '/status').set('accepted');
 
       document.getElementById('registerForm').style.display = 'none';
       document.getElementById('successCard').style.display = 'block';
