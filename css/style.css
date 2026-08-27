@@ -187,7 +187,16 @@
 
 [data-theme="dark"] .contact-form input::placeholder,
 [data-theme="dark"] .contact-form textarea::placeholder {
-  color: #666;
+  color: #888;
+}
+
+[data-theme="dark"] .login-form input::placeholder {
+  color: #888;
+}
+
+.status-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }
 
 [data-theme="dark"] .blog-thumb {

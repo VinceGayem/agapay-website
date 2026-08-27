@@ -1023,6 +1023,7 @@
       const user = JSON.parse(sessionStorage.getItem('agapayUser'));
       post.comments.push({
         author: user.name,
+        user: user.user,
         role: role,
         text: text,
         time: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -1509,7 +1510,7 @@
           <div class="post-item">
             <div class="post-header">
               <div style="display:flex;gap:8px;align-items:center;">
-                <span class="post-date">Due: ${t.deadline}</span>
+                <span class="post-date">Due: ${new Date(t.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                 <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--gold);" onclick="editTask(${t.id})">✏️</button>
                 <button style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:#ef4444;" onclick="deleteTask(${t.id})">🗑️</button>
               </div>
@@ -1608,7 +1609,7 @@
         return `
           <div class="post-item">
             <div class="post-header">
-              <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${t.deadline}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
+              <span class="post-date" style="color:${isOverdue && !myAnswer ? '#ef4444' : 'var(--text-light)'}">Due: ${new Date(t.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}${isOverdue && !myAnswer ? ' (Overdue)' : ''}</span>
             </div>
             <div class="post-title">${t.title}</div>
             <div class="post-body">${t.desc}</div>

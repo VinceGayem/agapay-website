@@ -144,6 +144,48 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    emailjs.init('ONzjMfvUFCoPoF5Ah');
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const btn = contactForm.querySelector('.btn');
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value;
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+        emailjs.send('service_ov5dper', 'template_jvvpnp5', {
+          name: name,
+          email: email,
+          subject: subject,
+          message: message,
+          from_name: name,
+          to_email: 'vidi.gayem.ui@phinmaed.com'
+        }).then(() => {
+          btn.textContent = 'Message Sent!';
+          btn.style.background = '#27ae60';
+          contactForm.reset();
+          setTimeout(() => {
+            btn.textContent = 'Send Message';
+            btn.style.background = '';
+            btn.disabled = false;
+          }, 3000);
+        }).catch(() => {
+          btn.textContent = 'Failed - Try Again';
+          btn.style.background = '#ef4444';
+          setTimeout(() => {
+            btn.textContent = 'Send Message';
+            btn.style.background = '';
+            btn.disabled = false;
+          }, 3000);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
