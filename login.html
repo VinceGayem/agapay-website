@@ -122,11 +122,19 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px;
     }
     .dash-stat {
-      background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
-      padding: 20px; text-align: center;
+      background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 14px;
+      padding: 20px 16px; text-align: center; position: relative; overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
     }
-    .dash-stat h4 { font-size: 1.8rem; color: var(--gold); font-weight: 700; }
-    .dash-stat p { color: var(--text-light); font-size: 0.85rem; margin-top: 4px; }
+    .dash-stat::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, var(--accent, rgba(212,168,67,0.08)), transparent 30%);
+      animation: stat-spin 4s linear infinite;
+    }
+    .dash-stat:hover { transform: translateY(-4px); box-shadow: 0 8px 25px color-mix(in srgb, var(--accent, #d4a843) 20%, transparent); }
+    .dash-stat h4 { font-size: 1.8rem; color: var(--accent, #d4a843); font-weight: 700; position: relative; z-index: 1; }
+    .dash-stat p { color: var(--text-light); font-size: 0.85rem; margin-top: 4px; position: relative; z-index: 1; }
+    @keyframes stat-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
     .dash-card {
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
@@ -347,9 +355,9 @@
       <button class="dash-logout" onclick="signOut()">Log Out</button>
     </div>
     <div class="dash-stats">
-      <div class="dash-stat"><h4 id="statDone">0</h4><p>Sessions Done</p></div>
-      <div class="dash-stat"><h4 id="statUpcoming">0</h4><p>Upcoming</p></div>
-      <div class="dash-stat"><h4 id="statProgress">0%</h4><p>Progress</p></div>
+      <div class="dash-stat" style="--accent:#22c55e;"><h4 id="statDone">0</h4><p>Sessions Done</p></div>
+      <div class="dash-stat" style="--accent:#6366f1;"><h4 id="statUpcoming">0</h4><p>Upcoming</p></div>
+      <div class="dash-stat" style="--accent:#f59e0b;"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
     <div class="admin-tabs-wrapper" id="menteeTabsWrapper">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabsWrapper','menteeTabs')"><span>☰ Menu</span></button>
