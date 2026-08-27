@@ -126,18 +126,22 @@
     }
     .dash-stat {
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 14px;
-      padding: 20px 16px; text-align: center; position: relative; overflow: hidden;
+      padding: 24px 16px; text-align: center; position: relative;
       transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
     }
     .dash-stat::before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: conic-gradient(from 0deg, transparent, var(--accent, rgba(212,168,67,0.08)), transparent 30%);
-      animation: stat-spin 4s linear infinite;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 14px; z-index: 0;
+      background: radial-gradient(circle at center, color-mix(in srgb, var(--accent, #d4a843) 6%, transparent) 0%, transparent 70%);
+      animation: stat-pulse 3s ease-in-out infinite;
     }
     .dash-stat:hover { transform: translateY(-4px); box-shadow: 0 8px 25px color-mix(in srgb, var(--accent, #d4a843) 20%, transparent); }
     .dash-stat h4 { font-size: 1.8rem; color: var(--accent, #d4a843); font-weight: 700; position: relative; z-index: 1; }
     .dash-stat p { color: var(--text-light); font-size: 0.85rem; margin-top: 4px; position: relative; z-index: 1; }
-    @keyframes stat-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes stat-pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
     .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
     .dash-card {
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 12px;
@@ -163,9 +167,47 @@
     .tab-content.active { display: block; }
     .mobile-menu-toggle {
       display: none; background: var(--gold); color: var(--navy); border: none;
-      padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
-      cursor: pointer; width: 100%; text-align: left; margin-bottom: 10px;
+      padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; position: fixed; top: 12px; left: 12px; z-index: 1001;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: all 0.3s ease;
     }
+    .mobile-menu-toggle:hover { transform: scale(1.05); }
+
+    .mobile-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 999; opacity: 0; transition: opacity 0.3s ease;
+    }
+    .mobile-overlay.show { display: block; opacity: 1; }
+
+    .mobile-sidebar {
+      position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
+      background: var(--navy); z-index: 1000; padding: 70px 0 30px;
+      transition: left 0.35s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .mobile-sidebar.open { left: 0; }
+    .mobile-sidebar .mobile-sidebar-header {
+      padding: 0 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 10px;
+    }
+    .mobile-sidebar .mobile-sidebar-header h3 { color: var(--gold); font-size: 1.2rem; margin: 0; }
+    .mobile-sidebar .mobile-sidebar-header p { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin: 4px 0 0; }
+    .mobile-sidebar-item {
+      display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+      color: rgba(255,255,255,0.7); font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; transition: all 0.25s ease; border-left: 3px solid transparent;
+      text-decoration: none;
+    }
+    .mobile-sidebar-item:hover, .mobile-sidebar-item.active {
+      background: rgba(212,168,67,0.1); color: var(--gold); border-left-color: var(--gold);
+    }
+    .mobile-sidebar-item .item-emoji { font-size: 1.1rem; width: 24px; text-align: center; }
+    .mobile-sidebar-close {
+      position: absolute; top: 15px; right: 15px; background: none; border: none;
+      color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer;
+      transition: color 0.2s; padding: 5px;
+    }
+    .mobile-sidebar-close:hover { color: var(--gold); }
 
     /* ===== LIST ITEMS ===== */
     .mentee-item, .post-item, .feedback-item {
@@ -284,8 +326,7 @@
       .admin-tabs { overflow-x: auto; flex-wrap: nowrap; }
       .mobile-menu-toggle { display: block; }
       .admin-tabs { display: none; }
-      .admin-tabs-wrapper.mobile-open .admin-tabs { display: flex; flex-direction: column; }
-      .admin-tab { text-align: left; }
+      .dashboard { padding: 15px 12px 40px; margin-top: 60px; }
       .dashboard { padding: 15px 12px 40px; margin-top: 60px; }
       .dash-header { flex-direction: column; align-items: flex-start; }
       .dash-header h1 { font-size: 1.4rem; }
@@ -315,6 +356,27 @@
   </style>
 </head>
 <body class="login-page">
+
+  <!-- Mobile menu button -->
+  <button class="mobile-menu-toggle" id="mobileMenuBtn" onclick="openSidebar()">☰</button>
+
+  <!-- Mobile sidebar overlay -->
+  <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Mobile sidebar -->
+  <div class="mobile-sidebar" id="mobileSidebar">
+    <button class="mobile-sidebar-close" onclick="closeSidebar()">✕</button>
+    <div class="mobile-sidebar-header">
+      <h3>🎓 Agapay</h3>
+      <p id="sidebarUserName">Mentee Dashboard</p>
+    </div>
+    <div id="sidebarLinks">
+      <a class="mobile-sidebar-item active" onclick="sidebarNavigate('home')"><span class="item-emoji">🏠</span> Home</a>
+      <a class="mobile-sidebar-item" onclick="sidebarNavigate('tasks')"><span class="item-emoji">📝</span> Tasks</a>
+      <a class="mobile-sidebar-item" onclick="sidebarNavigate('posts')"><span class="item-emoji">📢</span> Announcements</a>
+      <a class="mobile-sidebar-item" onclick="sidebarNavigate('feedback')"><span class="item-emoji">💬</span> Ask a Question</a>
+    </div>
+  </div>
 
   <!-- ===== LOGIN WRAPPER ===== -->
   <div class="login-wrapper" id="loginWrapper">
@@ -363,7 +425,6 @@
       <div class="dash-stat" style="--accent:#f59e0b;"><h4 id="statProgress">0%</h4><p>Progress</p></div>
     </div>
     <div class="admin-tabs-wrapper" id="menteeTabsWrapper">
-      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('menteeTabsWrapper','menteeTabs')"><span>☰ Menu</span></button>
       <div class="admin-tabs" id="menteeTabs">
         <button class="admin-tab active" data-tab="home" onclick="showMenteeTab('home')">🏠 Home</button>
         <button class="admin-tab" data-tab="tasks" onclick="showMenteeTab('tasks')">📝 Tasks</button>
@@ -413,7 +474,6 @@
       <div class="dash-stat"><h4 id="totalQuestions">0</h4><p>New Questions</p></div>
     </div>
     <div class="admin-tabs-wrapper" id="adminTabsWrapper">
-      <button class="mobile-menu-toggle" onclick="toggleMobileMenu('adminTabsWrapper','adminTabs')"><span>☰ Menu</span></button>
       <div class="admin-tabs" id="adminTabs">
         <button class="admin-tab active" data-tab="mentees" onclick="showAdminTab('mentees')">👤 Mentees</button>
         <button class="admin-tab" data-tab="sessions" onclick="showAdminTab('sessions')">📅 Sessions</button>
@@ -671,6 +731,7 @@
       document.querySelectorAll('#adminDashboard .tab-content').forEach(c => c.classList.remove('active'));
       document.querySelector('#adminDashboard .admin-tab[data-tab="' + tab + '"]').classList.add('active');
       document.getElementById('atab-' + tab).classList.add('active');
+      syncSidebarActive(tab);
     }
 
     function showMenteeTab(tab) {
@@ -678,6 +739,7 @@
       document.querySelectorAll('#menteeDashboard .tab-content').forEach(c => c.classList.remove('active'));
       document.querySelector('#menteeDashboard .admin-tab[data-tab="' + tab + '"]').classList.add('active');
       document.getElementById('mtab-' + tab).classList.add('active');
+      syncSidebarActive(tab);
     }
 
     function switchRole(r) {
@@ -688,8 +750,66 @@
       document.getElementById('adminLogin').style.display = r === 'admin' ? '' : 'none';
     }
 
-    function toggleMobileMenu(wrapperId, tabsId) {
-      document.getElementById(wrapperId).classList.toggle('mobile-open');
+    // ===== MOBILE SIDEBAR =====
+    let currentRole = 'mentee';
+
+    function openSidebar() {
+      document.getElementById('mobileOverlay').classList.add('show');
+      document.getElementById('mobileSidebar').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      document.getElementById('mobileOverlay').classList.remove('show');
+      document.getElementById('mobileSidebar').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function sidebarNavigate(tab) {
+      closeSidebar();
+      if (currentRole === 'admin') {
+        showAdminTab(tab);
+      } else {
+        showMenteeTab(tab);
+      }
+      // Update active state
+      document.querySelectorAll('.mobile-sidebar-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+
+    function updateSidebarForRole(role) {
+      currentRole = role;
+      const nameEl = document.getElementById('sidebarUserName');
+      const linksEl = document.getElementById('sidebarLinks');
+      if (role === 'admin') {
+        nameEl.textContent = 'Admin Dashboard';
+        linksEl.innerHTML = `
+          <a class="mobile-sidebar-item active" onclick="sidebarNavigate('mentees')"><span class="item-emoji">👤</span> Mentees</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('sessions')"><span class="item-emoji">📅</span> Sessions</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('tasks')"><span class="item-emoji">📝</span> Tasks</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('posts')"><span class="item-emoji">📢</span> Posts</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('questions')"><span class="item-emoji">❓</span> Questions</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('logs')"><span class="item-emoji">📋</span> Logs</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('settings')"><span class="item-emoji">⚙️</span> Settings</a>
+        `;
+      } else {
+        nameEl.textContent = 'Mentee Dashboard';
+        linksEl.innerHTML = `
+          <a class="mobile-sidebar-item active" onclick="sidebarNavigate('home')"><span class="item-emoji">🏠</span> Home</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('tasks')"><span class="item-emoji">📝</span> Tasks</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('posts')"><span class="item-emoji">📢</span> Announcements</a>
+          <a class="mobile-sidebar-item" onclick="sidebarNavigate('feedback')"><span class="item-emoji">💬</span> Ask a Question</a>
+        `;
+      }
+    }
+
+    function syncSidebarActive(tab) {
+      document.querySelectorAll('.mobile-sidebar-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.mobile-sidebar-item').forEach(el => {
+        if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'" + tab + "'")) {
+          el.classList.add('active');
+        }
+      });
     }
 
     // ===== HELPER: ESCAPE HTML =====
