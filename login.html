@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
   <title>Login - Agapay Mentorship</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -466,6 +464,7 @@
     let currentUser = null; // { id, email, name, picture, role }
     let activeRole = 'mentee'; // 'mentee' or 'admin'
     let realtimeChannels = [];
+    let profileLoading = false;
 
     // ===== AUTH: SIGN IN WITH GOOGLE =====
     async function signInWithGoogle() {
@@ -512,7 +511,8 @@
 
     // ===== AUTH: LOAD USER PROFILE =====
     async function loadUserProfile(user) {
-      if (!user) return;
+      if (!user || profileLoading) return;
+      profileLoading = true;
       console.log('Loading profile for:', user.id, user.email);
 
       // Check if profile exists
@@ -771,7 +771,7 @@
 
     // ===== COMMENTS =====
     async function addComment(postId, role) {
-      const input = document.getElementById(role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId;
+      const input = document.getElementById((role === 'admin' ? 'adminComment-' : 'menteeComment-') + postId);
       const text = input.value.trim();
       if (!text) return;
       await db.from('comments').insert({
@@ -1196,7 +1196,7 @@
       const email = document.getElementById('inviteEmail').value.trim();
       if (!email) { alert('Enter an email.'); return; }
       const baseUrl = window.location.origin;
-      const link = baseUrl + '/admin-register.html?email=' + encodeURIComponent(email);
+      const link = baseUrl + '/agapay-website/admin-register.html?email=' + encodeURIComponent(email);
 
       // Store invite in a simple table or just show the link
       document.getElementById('inviteEmail').value = '';
