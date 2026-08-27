@@ -755,7 +755,7 @@
           DB[k] = snap.val() || (k === 'admin' ? DB.admin : {});
           // Re-render active views
           if (document.getElementById('adminDashboard').classList.contains('active')) {
-            if (k === 'loggedUsers') renderMenteeList();
+            if (k === 'mentees' || k === 'loggedUsers') renderMenteeList();
             if (k === 'sessions') renderSessionsList();
             if (k === 'tasks') renderAdminTasks();
             if (k === 'posts') renderAdminPosts();
@@ -1386,28 +1386,45 @@
 
     // ===== MENTEE LIST =====
     function renderMenteeList() {
+      const menteesObj = getDataObj('mentees');
       const loggedUsersObj = getDataObj('loggedUsers');
-      const loggedUsers = Object.values(loggedUsersObj);
+      
+      // Combine registered mentees + logged-in users (no duplicates)
+      const allMentees = {};
+      Object.values(menteesObj).forEach(m => {
+        allMentees[m.user] = { ...m, lastLogin: 'Not yet', status: 'registered' };
+      });
+      Object.values(loggedUsersObj).forEach(u => {
+        if (allMentees[u.user]) {
+          allMentees[u.user].lastLogin = u.lastLogin || 'N/A';
+          allMentees[u.user].status = 'active';
+          allMentees[u.user].picture = u.picture || allMentees[u.user].picture;
+        } else {
+          allMentees[u.user] = { ...u, status: 'active' };
+        }
+      });
+      
+      const mentees = Object.values(allMentees);
 
-      document.getElementById('menteeList').innerHTML = loggedUsers.length ? loggedUsers.map(u => `
+      document.getElementById('menteeList').innerHTML = mentees.length ? mentees.map(u => `
         <div class="mentee-item">
           <div class="mentee-info">
             <div class="mentee-avatar">${u.picture ? `<img src="${u.picture}" style="width:45px;height:45px;border-radius:50%;">` : u.name.split(' ').map(n => n[0]).join('')}</div>
             <div>
               <div class="mentee-name">${u.name}</div>
-              <div class="mentee-email">${u.email || u.user}</div>
-              <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Last login: ${u.lastLogin || 'N/A'}</div>
+              <div class="mentee-email">${u.email || u.user + '@phinmaed.com'}</div>
+              <div style="font-size:0.7rem;color:var(--text-light);margin-top:2px;">Last login: ${u.lastLogin}</div>
             </div>
           </div>
-          <span class="mentee-status status-active">Active</span>
+          <span class="mentee-status ${u.status === 'active' ? 'status-active' : 'status-pending'}">${u.status === 'active' ? 'Active' : 'Registered'}</span>
         </div>
-      `).join('') : '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees have logged in yet.</p>';
+      `).join('') : '<p style="text-align:center;color:var(--text-light);padding:20px;">No mentees yet.</p>';
 
-      document.getElementById('totalMentees').textContent = loggedUsers.length;
+      document.getElementById('totalMentees').textContent = mentees.length;
 
       const sel = document.getElementById('sessionMentee');
       if (sel) {
-        sel.innerHTML = loggedUsers.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
+        sel.innerHTML = mentees.map(m => `<option value="${m.user}">${m.name}</option>`).join('');
       }
     }
 
