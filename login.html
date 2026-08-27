@@ -737,10 +737,12 @@
       const body = document.getElementById('postBody').value.trim();
       const tag = document.getElementById('postTag').value;
       if (!title || !body) { alert('Fill in all fields.'); return; }
-      await db.from('posts').insert({ title, body, tag, created_by: currentUser.name });
+      const { error } = await db.from('posts').insert({ title, body, tag, created_by: currentUser.name });
+      if (error) { console.error('Create post error:', error); alert('Failed to create post: ' + error.message); return; }
       document.getElementById('postTitle').value = '';
       document.getElementById('postBody').value = '';
       flash('postCreated');
+      await renderAll();
     }
 
     function editPost(id) {
@@ -781,6 +783,7 @@
         text
       });
       input.value = '';
+      await renderAll();
     }
 
     async function deleteComment(id) {
@@ -837,6 +840,7 @@
       document.getElementById('taskDeadline').value = '';
       document.getElementById('taskDeadlineTime').value = '';
       flash('taskCreated');
+      await renderAll();
     }
 
     async function renderAdminTasks() {
@@ -968,6 +972,7 @@
         author: currentUser.name,
         answer
       });
+      await renderAll();
     }
 
     function editTaskAnswer(taskId) {
@@ -1003,6 +1008,7 @@
       });
       document.getElementById('menteeFeedback').value = '';
       flash('feedbackSent');
+      await renderAll();
     }
 
     async function renderMyFeedback() {
@@ -1106,6 +1112,7 @@
       document.getElementById('sessionTitle').value = '';
       document.getElementById('sessionDate').value = '';
       flash('sessionAdded');
+      await renderAll();
     }
 
     async function renderSessionsList() {
