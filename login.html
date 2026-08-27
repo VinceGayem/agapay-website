@@ -343,7 +343,9 @@
     }
 
     /* ===== REACTIONS (Facebook-style) ===== */
-    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; }
+    .reactions-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--gray-200); align-items: center; justify-content: flex-start; }
+    .reactions-left { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .reactions-right { margin-left: auto; position: relative; flex-shrink: 0; }
     .reaction-btn {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
       border-radius: 20px; border: 1px solid var(--gray-200); background: var(--bg);
@@ -382,7 +384,7 @@
     .reaction-trigger:active { transform: scale(0.9); }
 
     .reaction-picker-fb {
-      display: none; position: absolute; bottom: calc(100% + 12px); right: 0; left: auto;
+      display: none; position: absolute; bottom: calc(100% + 10px); right: 0;
       background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: 40px;
       padding: 8px 14px; box-shadow: 0 6px 30px rgba(0,0,0,0.25); z-index: 10;
       white-space: nowrap;
@@ -1012,11 +1014,11 @@
         if (r.user_id === userId) counts[r.emoji].reacted = true;
       });
 
-      let html = '<div class="reactions-bar">';
+      let html = '<div class="reactions-bar"><div class="reactions-left">';
       Object.entries(counts).forEach(([emoji, data]) => {
         html += `<button class="reaction-btn ${data.reacted ? 'reacted' : ''}" onclick="toggleReaction('${postId}', '${emoji}')"><span class="r-emoji">${emoji}</span><span class="r-count">${data.count}</span></button>`;
       });
-      html += `<div class="reaction-wrapper">`;
+      html += '</div><div class="reactions-right">';
       html += `<button class="reaction-trigger" onclick="showFbPicker('${postId}')">➕</button>`;
       html += `<div class="reaction-picker-fb" id="fbpicker-${postId}">`;
       REACTION_EMOJIS.forEach((e, i) => {
@@ -1044,7 +1046,7 @@
     }
 
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.reaction-wrapper')) {
+      if (!e.target.closest('.reactions-right')) {
         document.querySelectorAll('.reaction-picker-fb.show').forEach(p => { p.classList.add('hiding'); setTimeout(() => p.classList.remove('show','hiding'), 250); });
       }
     });
