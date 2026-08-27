@@ -228,6 +228,8 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
+      body.login-page { padding: 15px; gap: 20px; }
+      .login-card { padding: 25px 20px; }
       .dash-stats { grid-template-columns: 1fr; }
       .dash-grid { grid-template-columns: 1fr; }
       .admin-tabs { overflow-x: auto; flex-wrap: nowrap; }
@@ -235,6 +237,30 @@
       .admin-tabs { display: none; }
       .admin-tabs-wrapper.mobile-open .admin-tabs { display: flex; flex-direction: column; }
       .admin-tab { text-align: left; }
+      .dashboard { padding: 15px 12px 40px; margin-top: 60px; }
+      .dash-header { flex-direction: column; align-items: flex-start; }
+      .dash-header h1 { font-size: 1.4rem; }
+      .dash-card { padding: 18px 15px; }
+      .post-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .post-header > div:last-child { flex-direction: row; }
+      .comment-form { flex-direction: column; }
+      .comment-form input { width: 100%; }
+      .feedback-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .feedback-header > div { flex-direction: row; gap: 6px; }
+      .mentee-info { flex-wrap: wrap; }
+      .mentee-item > div:last-child { flex-wrap: wrap; gap: 6px; }
+      .settings-section { padding: 15px 0; }
+      .reply-content { word-break: break-word; }
+      .post-title, .post-body, .feedback-message { word-break: break-word; }
+      .google-btn { font-size: 0.9rem; padding: 12px; }
+      .dash-logout { padding: 8px 16px; font-size: 0.85rem; }
+      .btn { padding: 10px 16px; font-size: 0.9rem; }
+    }
+    @media (max-width: 380px) {
+      .login-card { padding: 20px 15px; }
+      .login-logo { font-size: 1.6rem; }
+      .dash-header h1 { font-size: 1.2rem; }
+      .role-btn { padding: 8px 20px; font-size: 0.8rem; }
     }
   </style>
 </head>
