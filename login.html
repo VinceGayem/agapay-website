@@ -416,9 +416,6 @@
     .reaction-picker-fb span:nth-child(5) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.10s both; }
     .reaction-picker-fb span:nth-child(6) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.12s both; }
     .reaction-picker-fb span:nth-child(7) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.14s both; }
-    .reaction-picker-fb span:nth-child(8) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.16s both; }
-    .reaction-picker-fb span:nth-child(9) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.18s both; }
-    .reaction-picker-fb span:nth-child(10) { animation: fbEmojiIn 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.20s both; }
     @keyframes fbEmojiIn {
       0% { opacity: 0; transform: scale(0) translateY(20px); }
       100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -977,7 +974,7 @@
     }
 
     // ===== REACTIONS (Facebook-style) =====
-    const REACTION_EMOJIS = ['👍','❤️','😂','😮','😢','🔥','✨','👏','💯','🎉'];
+    const REACTION_EMOJIS = ['👍','❤️','😂','😮','🔥','✨','💯'];
 
     async function toggleReaction(postId, emoji) {
       const userId = currentUser.id;
