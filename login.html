@@ -515,45 +515,45 @@
       profileLoading = true;
       console.log('Loading profile for:', user.id, user.email);
 
-      // Check if profile exists
-      const { data: profile, error: profileErr } = await db
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      console.log('Existing profile:', profile, 'Error:', profileErr);
-
-      if (profile) {
-        currentUser = { id: user.id, email: user.email, name: profile.name, picture: profile.picture, role: profile.role };
-      } else {
-        // Create profile from Google metadata
-        const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
-        const picture = user.user_metadata?.avatar_url || null;
-
-        // Check if this is a known admin email
-        const isAdmin = await checkIsAdmin(user.email);
-
-        console.log('Creating new profile:', { name, email: user.email, role: isAdmin ? 'admin' : 'mentee' });
-
-        const { data: newProfile, error: insertErr } = await db
+      try {
+        const { data: profile, error: profileErr } = await db
           .from('profiles')
-          .insert({ user_id: user.id, name, email: user.email, role: isAdmin ? 'admin' : 'mentee', picture })
-          .select()
-          .single();
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        console.log('New profile created:', newProfile, 'Error:', insertErr);
+        console.log('Existing profile:', profile, 'Error:', profileErr);
 
-        currentUser = { id: user.id, email: user.email, name, picture, role: newProfile?.role || 'mentee' };
+        if (profile) {
+          currentUser = { id: user.id, email: user.email, name: profile.name, picture: profile.picture, role: profile.role };
+        } else {
+          const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+          const picture = user.user_metadata?.avatar_url || null;
+          const isAdmin = await checkIsAdmin(user.email);
+
+          console.log('Creating new profile:', { name, email: user.email, role: isAdmin ? 'admin' : 'mentee' });
+
+          const { data: newProfile, error: insertErr } = await db
+            .from('profiles')
+            .insert({ user_id: user.id, name, email: user.email, role: isAdmin ? 'admin' : 'mentee', picture })
+            .select()
+            .maybeSingle();
+
+          console.log('New profile created:', newProfile, 'Error:', insertErr);
+          currentUser = { id: user.id, email: user.email, name, picture, role: newProfile?.role || 'mentee' };
+        }
+
+        sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
+        showDashboard();
+      } catch (e) {
+        console.error('loadUserProfile error:', e);
+        profileLoading = false;
       }
-
-      sessionStorage.setItem('agapayUser', JSON.stringify(currentUser));
-      showDashboard();
     }
 
     // ===== AUTH: CHECK IF ADMIN =====
     async function checkIsAdmin(email) {
-      const { data } = await db.from('profiles').select('role').eq('email', email).eq('role', 'admin').single();
+      const { data } = await db.from('profiles').select('role').eq('email', email).eq('role', 'admin').maybeSingle();
       return !!data;
     }
 
@@ -1139,7 +1139,7 @@
     }
 
     async function toggleSession(id) {
-      const { data: s } = await db.from('sessions').select('status').eq('id', id).single();
+      const { data: s } = await db.from('sessions').select('status').eq('id', id).maybeSingle();
       if (s) {
         await db.from('sessions').update({ status: s.status === 'done' ? 'upcoming' : 'done' }).eq('id', id);
       }
